@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>نظام إدارة الحضانة</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:'IBM Plex Sans Arabic','Segoe UI',Tahoma,sans-serif;background:#F7F4EE;color:#1B2B34;font-size:15px}
+a{color:inherit;text-decoration:none}
+h1,h2,p{margin:0}
+input:focus,select:focus,textarea:focus,button:focus-visible,a:focus-visible{outline:2px solid #0F766E;outline-offset:1px}
+.app{display:flex;flex-wrap:wrap;min-height:100vh}
+.sidebar{flex:1 1 264px;background:#12333A;color:#E7F1EF;padding:28px 18px;display:flex;flex-direction:column;gap:28px}
+@media(min-width:900px){.sidebar{flex:0 0 264px;position:sticky;top:0;height:100vh}}
+.main{flex:999 1 560px;min-width:0;padding:32px 40px 48px;display:flex;flex-direction:column;gap:24px}
+@media(max-width:640px){.main{padding:20px 16px 40px}}
+.brand{display:flex;align-items:center;gap:12px;padding:0 6px}
+.brand-mark{width:44px;height:44px;border-radius:12px;background:#F4B63F;color:#12333A;display:flex;align-items:center;justify-content:center;flex:none}
+.brand-name{font-size:17px;font-weight:700;color:#fff}
+.brand-sub{font-size:12.5px;color:#A9C4C0;margin-top:2px}
+.nav{display:flex;flex-direction:column;gap:4px}
+.nav a{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 14px;border-radius:12px;color:#BFD6D2;font-weight:500}
+.nav a:hover{background:rgba(255,255,255,.08)}
+.nav a.active{background:rgba(255,255,255,.12);color:#fff;font-weight:600}
+.nav a.active svg{color:#F4B63F}
+.side-user{margin-top:auto;border-top:1px solid rgba(255,255,255,.14);padding:18px 6px 0;display:flex;align-items:center;gap:12px}
+.avatar{width:40px;height:40px;border-radius:50%;background:#F4B63F;color:#12333A;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none}
+.side-user-name{font-size:14.5px;font-weight:600;color:#fff}
+.side-user-role{font-size:12.5px;color:#A9C4C0}
+.logout{margin-inline-start:auto;width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#BFD6D2;background:transparent;border:0;cursor:pointer;flex:none}
+.logout:hover{background:rgba(255,255,255,.08)}
+.page-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px}
+.page-head h1{font-size:28px;line-height:1.3;font-weight:700}
+.page-head p{margin-top:4px;color:#5B6B73;font-size:14.5px}
+.actions{display:flex;flex-wrap:wrap;gap:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:12px;border:1px solid transparent;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;background:#0F766E;color:#fff}
+.btn:hover{background:#0B5A54}
+.btn-outline{background:#fff;color:#1B2B34;border-color:#CFC8BB}
+.btn-outline:hover{background:#F7F4EE}
+.btn-icon{width:44px;padding:0;background:transparent;color:#0F766E;border:0}
+.btn-icon:hover{background:#E3F2EF}
+.btn-icon.danger{color:#B42318}
+.btn-icon.danger:hover{background:#FCE9E6}
+.card{background:#fff;border:1px solid #E6E0D5;border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:18px;min-width:0}
+.card h2{font-size:18px;font-weight:700}
+.sub{color:#5B6B73;font-size:13.5px;margin-top:4px}
+.grid{display:flex;flex-wrap:wrap;gap:16px}
+.grid>*{flex:1 1 220px;min-width:0}
+.two-col{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.two-col>.wide{flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:24px}
+.two-col>.side{flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:24px}
+.stat{background:#fff;border:1px solid #E6E0D5;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:10px}
+.stat .label{color:#5B6B73;font-size:14px}
+.stat .value{font-size:28px;font-weight:700;line-height:1.1}
+.stat .value small{font-size:14px;font-weight:500;color:#5B6B73}
+.stat .note{font-size:13px;color:#5B6B73}
+.stat.dark{background:#12333A;color:#fff;border-color:#12333A}
+.stat.dark .label,.stat.dark .note,.stat.dark .value small{color:#BFD6D2}
+.pos{color:#116329}.neg{color:#B42318}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:560px}
+th{background:#F7F4EE;color:#5B6B73;font-size:13px;font-weight:600;text-align:right;padding:10px 14px;white-space:nowrap}
+th:first-child{border-radius:0 10px 10px 0}th:last-child{border-radius:10px 0 0 10px}
+td{padding:12px 14px;border-bottom:1px solid #EFEAE0;vertical-align:middle}
+tfoot td{background:#F7F4EE;font-weight:700;border-bottom:0}
+.num{white-space:nowrap}
+.ltr{direction:ltr;display:inline-block;unicode-bidi:embed}
+.muted{color:#5B6B73}
+.code{color:#0F766E;font-weight:600}
+.empty{padding:28px;text-align:center;color:#5B6B73}
+.badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12.5px;font-weight:600}
+.b-green{background:#E4F4E8;color:#116329}.b-red{background:#FCE9E6;color:#9B1C12}.b-gray{background:#ECE8E0;color:#3B4A52}
+.b-amber{background:#FDF1D8;color:#6B4200}.b-teal{background:#E3F2EF;color:#0B5A54}.b-dark{background:#12333A;color:#fff}
+form.form{display:flex;flex-direction:column;gap:16px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label{font-size:13.5px;font-weight:600}
+.row{display:flex;flex-wrap:wrap;gap:14px}
+.row>.field{flex:1 1 130px}
+input[type=text],input[type=search],input[type=date],input[type=month],input[type=number],input[type=tel],input[type=password],select,textarea{width:100%;min-height:44px;border:1px solid #CFC8BB;border-radius:10px;padding:0 12px;font-family:inherit;font-size:14.5px;background:#fff;color:#1B2B34}
+textarea{padding:10px 12px;min-height:80px;resize:vertical}
+input[readonly]{background:#F7F4EE;color:#3B4A52}
+.ltr-input{direction:ltr;text-align:right}
+.hint{font-size:12.5px;color:#5B6B73}
+.form-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:4px}
+.form-actions .btn{flex:1}
+.filters{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px}
+.filters .field{flex:1 1 180px}
+.pager{display:flex;flex-wrap:wrap;gap:6px}
+.pager button{min-width:44px;min-height:44px;border-radius:10px;border:1px solid #CFC8BB;background:#fff;font-weight:600;font-family:inherit;cursor:pointer}
+.pager button.active{background:#0F766E;border-color:#0F766E;color:#fff}
+.flash{padding:14px 18px;border-radius:12px;font-weight:600}
+.flash-success{background:#E4F4E8;color:#116329}.flash-error{background:#FCE9E6;color:#9B1C12}
+.bar-list{display:flex;flex-direction:column;gap:16px}
+.bar-item{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px}
+.bar-item .name{flex:0 0 120px;font-weight:600}
+.bar-track{flex:1 1 200px;min-width:0;height:12px;border-radius:6px;background:#EFEAE0}
+.bar-fill{height:12px;border-radius:6px;background:#F4B63F}.bar-fill.teal{background:#0F766E}
+.bar-val{flex:0 0 160px;font-size:14px;color:#3B4A52;text-align:left}
+.chart{display:flex;align-items:flex-end;gap:8px;height:240px;border-bottom:1px solid #E6E0D5}
+.chart .col{flex:1;display:flex;align-items:flex-end;justify-content:center;gap:6px;height:100%}
+.chart .b{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%}
+.chart .b span{font-size:11.5px;color:#5B6B73}
+.chart .b i{display:block;width:22px;border-radius:6px 6px 0 0}
+.chart-labels{display:flex;gap:8px;padding-top:10px}
+.chart-labels div{flex:1;text-align:center;font-size:13.5px;color:#5B6B73}
+.legend{display:flex;gap:18px;font-size:13.5px}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.login-wrap{display:flex;flex-wrap:wrap;min-height:100vh}
+.login-hero{flex:1 1 440px;background:#12333A;color:#E7F1EF;padding:56px 48px;display:flex;flex-direction:column;justify-content:space-between;gap:48px}
+.login-hero h1{font-size:44px;line-height:1.25;color:#fff}
+.login-hero p{font-size:18px;line-height:1.9;color:#BFD6D2;max-width:480px}
+.login-hero ul{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:14px}
+.login-hero li{display:flex;align-items:center;gap:12px}.login-hero li svg{color:#F4B63F}
+.login-form-wrap{flex:1 1 480px;display:flex;align-items:center;justify-content:center;padding:48px 24px}
+.login-form{width:100%;max-width:420px;background:#fff;border:1px solid #E6E0D5;border-radius:20px;padding:36px;display:flex;flex-direction:column;gap:20px}
+.login-form h2{font-size:26px}
+.receipt{background:#fff;max-width:720px;width:100%;margin:8px auto;border:1.5px dashed #CFC8BB;border-radius:14px;padding:36px;display:flex;flex-direction:column;gap:22px}
+.receipt-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
+.receipt-line{display:flex;flex-wrap:wrap;gap:8px;border-bottom:1px solid #EFEAE0;padding-bottom:10px}
+.receipt-line .k{color:#5B6B73;min-width:120px}
+.receipt-sign{display:flex;justify-content:space-between;gap:24px;margin-top:18px;color:#5B6B73;font-size:14px}
+.receipt-sign div{flex:1;border-top:1px solid #CFC8BB;padding-top:8px;text-align:center}
+.role-cards{display:flex;flex-wrap:wrap;gap:16px}
+.role-cards>div{flex:1 1 200px;border:1px solid #E6E0D5;border-radius:14px;padding:16px}
+.role-cards p{margin-top:10px;line-height:1.8;color:#3B4A52}
+.warn{background:#FDF1D8;color:#6B4200;border-radius:12px;padding:14px 16px;line-height:1.8}
+@media print{
+  body{background:#fff}
+  .sidebar,.no-print,.flash,.filters,.actions,.pager{display:none!important}
+  .main{padding:0}.receipt{border:1px solid #444;margin:0 auto}table{min-width:0}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+'use strict';
+/* ============ ثوابت ============ */
+const MONTHS = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+const DAYS = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+const METHODS = ['نقدي','تحويل بنكي','محفظة إلكترونية','شيك'];
+const ROLES = ['مدير','محاسب','موظف'];
+const PERMS = {
+  dashboard:['مدير','محاسب','موظف'], students_view:['مدير','محاسب','موظف'], students_edit:['مدير','موظف'],
+  students_delete:['مدير'], classes:['مدير','موظف'], receipts:['مدير','محاسب','موظف'], receipts_delete:['مدير','محاسب'],
+  expenses:['مدير','محاسب'], journal:['مدير','محاسب'], users:['مدير'], settings:['مدير']
+};
+const NAV = [
+  ['dashboard','dashboard','لوحة التحكم','dashboard'], ['students','students','الطلاب والفصول','students_view'],
+  ['receipts','receipts','التحصيلات','receipts'], ['expenses','expenses','المصروفات','expenses'],
+  ['journal','journal','اليومية والصندوق','journal'], ['users','users','المستخدمون','users'],
+  ['settings','settings','النسخ والإعدادات','settings']
+];
+const KEY = 'nursery_db_v1';
+const PER = 15;
+const CUR = 'ج.م';
+
+const ICONS = {
+  dashboard:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
+  students:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c2.5 0 4.5 2 4.5 4.5"/>',
+  receipts:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+  expenses:'<path d="M3 7l6 6 4-4 8 8"/><path d="M15 17h6v-6"/>',
+  journal:'<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/>',
+  users:'<path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M9.5 12l2 2 3.5-4"/>',
+  settings:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/>',
+  logout:'<path d="M10 4H5v16h5"/><path d="M14 8l4 4-4 4M18 12H9"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>', print:'<path d="M7 9V4h10v5"/><rect x="4" y="9" width="16" height="8" rx="2"/><path d="M7 14h10v6H7z"/>',
+  edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/>', trash:'<path d="M5 7h14M9 7V4h6v3M7 7l1 13h8l1-13"/>',
+  search:'<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/>', person:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>',
+  check:'<path d="M5 12l5 5 9-10"/>'
+};
+const icon = (n, s = 20) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ''}</svg>`;
+
+/* ============ أدوات ============ */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = n => Number(n) || 0;
+const r2 = n => Math.round(num(n) * 100) / 100;
+const fmt = n => num(n).toLocaleString('en-US', {maximumFractionDigits: 2});
+const fd = d => d ? d.split('-').reverse().join('/') : '';
+const pad = (n, l = 2) => String(n).padStart(l, '0');
+const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+const monthStr = d => d.slice(0, 7);
+const isDate = v => /^\d{4}-\d{2}-\d{2}$/.test(v || '');
+
+function wordsBelow1000(n) {
+  const U = ['','واحد','اثنان','ثلاثة','أربعة','خمسة','ستة','سبعة','ثمانية','تسعة','عشرة','أحد عشر','اثنا عشر','ثلاثة عشر','أربعة عشر','خمسة عشر','ستة عشر','سبعة عشر','ثمانية عشر','تسعة عشر'];
+  const T = {2:'عشرون',3:'ثلاثون',4:'أربعون',5:'خمسون',6:'ستون',7:'سبعون',8:'ثمانون',9:'تسعون'};
+  const H = {1:'مائة',2:'مائتان',3:'ثلاثمائة',4:'أربعمائة',5:'خمسمائة',6:'ستمائة',7:'سبعمائة',8:'ثمانمائة',9:'تسعمائة'};
+  const parts = [], h = Math.floor(n / 100), r = n % 100;
+  if (h) parts.push(H[h]);
+  if (r) { if (r < 20) parts.push(U[r]); else { const u = r % 10; parts.push((u ? U[u] + ' و' : '') + T[Math.floor(r / 10)]); } }
+  return parts.join(' و');
+}
+function amountWords(a) {
+  let p = Math.floor(a), q = Math.round((a - p) * 100);
+  if (q === 100) { p++; q = 0; }
+  if (p >= 1000000) return '';
+  if (!p && !q) return 'صفر جنيه';
+  const out = [];
+  if (p) {
+    const th = Math.floor(p / 1000), rest = p % 1000, w = [];
+    if (th) w.push(th === 1 ? 'ألف' : th === 2 ? 'ألفان' : th <= 10 ? wordsBelow1000(th) + ' آلاف' : wordsBelow1000(th) + ' ألف');
+    if (rest) w.push(wordsBelow1000(rest));
+    out.push(w.join(' و') + ' جنيه مصري');
+  }
+  if (q) out.push(wordsBelow1000(q) + ' قرشًا');
+  return out.join(' و') + ' فقط لا غير';
+}
+
+async function hashPw(p) {
+  const s = 'nursery|' + p;
+  if (window.crypto && crypto.subtle) {
+    const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+    return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+  }
+  let h = 5381; for (const c of s) h = ((h << 5) + h + c.charCodeAt(0)) >>> 0;
+  return 'x' + h;
+}
+
+/* ============ البيانات ============ */
+function fresh() {
+  return {
+    v: 1, nid: 100, expSeq: 0, stuSeq: 0, name: 'اسم الحضانة',
+    classes: [{id:1,name:'KG1'},{id:2,name:'KG2'},{id:3,name:'تمهيدي'}],
+    students: [], receipts: [], expenses: [], users: [],
+    types: ['مرتبات','إيجار','كهرباء','مياه','أدوات تعليمية','صيانة','أنشطة','مصروفات أخرى'].map((n, i) => ({id: i + 1, name: n}))
+  };
+}
+function load() {
+  try { const s = localStorage.getItem(KEY); if (s) return Object.assign(fresh(), JSON.parse(s)); } catch (e) {}
+  return fresh();
+}
+let db = load();
+let memoryOnly = false;
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(db)); }
+  catch (e) { memoryOnly = true; flash('تعذر حفظ البيانات في هذا المتصفح. استخدم "نسخة احتياطية" فورًا.', 'error'); }
+}
+const nid = () => db.nid++;
+const stu = id => db.students.find(s => s.id === id);
+const cls = id => db.classes.find(c => c.id === id);
+const typ = id => db.types.find(t => t.id === id);
+const expRef = x => 'E-' + pad(x.seq, 4);
+
+function journalEntries() {
+  const L = [];
+  db.receipts.forEach(r => { const s = stu(r.studentId); L.push({id:r.id, date:r.date, type:'تحصيل', ref:r.no, desc:`رسوم ${r.month} — ${s ? s.name : 'طالب محذوف'}`, in:num(r.amount), out:0}); });
+  db.expenses.forEach(x => { const t = typ(x.typeId); L.push({id:x.id, date:x.date, type:'مصروف', ref:expRef(x), desc:(t ? t.name : 'غير محدد') + (x.desc ? ' — ' + x.desc : ''), in:0, out:num(x.amount)}); });
+  L.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.id - b.id);
+  let bal = 0; L.forEach(e => { bal = r2(bal + e.in - e.out); e.bal = bal; });
+  return L;
+}
+const currentBalance = () => { const L = journalEntries(); return L.length ? L[L.length - 1].bal : 0; };
+function nextReceiptNo(date) {
+  const y = date.slice(0, 4); let mx = 0;
+  db.receipts.forEach(r => { const m = r.no.match(/^R-(\d{4})-(\d+)$/); if (m && m[1] === y) mx = Math.max(mx, +m[2]); });
+  return `R-${y}-${pad(mx + 1, 4)}`;
+}
+const nextStudentCode = () => 'S-' + pad(db.stuSeq + 1, 4);
+
+/* ============ الجلسة والصلاحيات ============ */
+let uid = null;
+try { uid = +sessionStorage.getItem('uid') || null; } catch (e) {}
+const me = () => db.users.find(u => u.id === uid) || null;
+const can = p => { const u = me(); return !!u && PERMS[p].includes(u.role); };
+
+/* ============ الحالة والرسائل ============ */
+const ui = { stu:{q:'',c:'0',page:1,edit:null,editClass:null}, rec:{q:'',m:'',p:'',page:1}, exp:{month:todayStr().slice(0,7),t:'0',page:1}, jr:{from:todayStr().slice(0,8)+'01',to:todayStr()}, usr:{edit:null} };
+let flashes = [];
+function flash(m, t = 'success') { flashes.push({m, t}); }
+const root = document.getElementById('root');
+
+/* ============ العرض ============ */
+function pager(key, total) {
+  const pages = Math.max(1, Math.ceil(total / PER));
+  if (pages <= 1) return '';
+  const cur = Math.min(ui[key].page, pages);
+  let h = '<nav class="pager" aria-label="الصفحات">';
+  for (let i = 1; i <= pages; i++) h += `<button type="button" class="${i === cur ? 'active' : ''}" data-act="page" data-k="${key}" data-p="${i}">${i}</button>`;
+  return h + '</nav>';
+}
+function paged(key, arr) {
+  const pages = Math.max(1, Math.ceil(arr.length / PER));
+  ui[key].page = Math.min(Math.max(1, ui[key].page), pages);
+  return arr.slice((ui[key].page - 1) * PER, ui[key].page * PER);
+}
+const opt = (list, sel) => list.map(([v, l]) => `<option value="${esc(v)}" ${String(v) === String(sel) ? 'selected' : ''}>${esc(l)}</option>`).join('');
+
+function layout(active, inner) {
+  const u = me();
+  const fl = flashes.map(f => `<div class="flash flash-${f.t}" role="status">${esc(f.m)}</div>`).join(''); flashes = [];
+  const warn = memoryOnly ? '<div class="flash flash-error">البيانات غير محفوظة في هذا المتصفح. حمّل نسخة احتياطية من صفحة "النسخ والإعدادات".</div>' : '';
+  return `<div class="app"><aside class="sidebar no-print">
+    <div class="brand"><div class="brand-mark">${icon('person', 24)}</div><div><div class="brand-name">نظام الحضانة</div><div class="brand-sub">${esc(db.name)}</div></div></div>
+    <nav class="nav" aria-label="القائمة الرئيسية">${NAV.filter(n => can(n[3])).map(n => `<a href="#/${n[0] === 'dashboard' ? '' : n[0]}" class="${active === n[0] ? 'active' : ''}" ${active === n[0] ? 'aria-current="page"' : ''}>${icon(n[1])} ${n[2]}</a>`).join('')}</nav>
+    <div class="side-user"><div class="avatar">${esc(u.name.charAt(0))}</div><div style="min-width:0"><div class="side-user-name">${esc(u.name)}</div><div class="side-user-role">${esc(u.username)} · ${esc(u.role)}</div></div>
+    <button type="button" class="logout" data-act="logout" aria-label="تسجيل الخروج">${icon('logout')}</button></div>
+  </aside><main class="main">${fl}${warn}${inner}</main></div>`;
+}
+
+function authView(setup) {
+  return `<div class="login-wrap"><section class="login-hero no-print">
+    <div class="brand"><div class="brand-mark">${icon('person', 28)}</div><div style="font-size:15px;color:#BFD6D2">${esc(db.name)}</div></div>
+    <div style="display:flex;flex-direction:column;gap:20px"><h1>نظام الحضانة</h1><p>إدارة الطلاب والتحصيلات والمصروفات في مكان واحد، وحسابات اليومية والصندوق تتحدّث تلقائيًا.</p>
+    <ul><li>${icon('check')} ملفات الطلاب والفصول</li><li>${icon('check')} إيصالات الرسوم الشهرية وطباعتها</li><li>${icon('check')} المصروفات والصندوق بالرصيد الحالي</li></ul></div>
+    <div style="font-size:13px;color:#A9C4C0">© ${new Date().getFullYear()}</div></section>
+    <section class="login-form-wrap"><form class="login-form form" data-form="${setup ? 'setup' : 'login'}">
+    ${setup ? '<div><h2>إنشاء حساب المدير</h2><p class="muted" style="margin-top:6px">أول مرة؟ أنشئ حساب المدير لتبدأ.</p></div><div class="field"><label for="full_name">الاسم الكامل</label><input id="full_name" name="full_name" type="text" required></div>' : '<div><h2>تسجيل الدخول</h2><p class="muted" style="margin-top:6px">أدخل بيانات حسابك للمتابعة</p></div>'}
+    ${authError ? `<div class="flash flash-error" role="alert">${esc(authError)}</div>` : ''}
+    <div class="field"><label for="username">اسم المستخدم</label><input id="username" name="username" type="text" class="ltr-input" autocomplete="username" required ${setup ? 'value="admin"' : 'autofocus'}></div>
+    <div class="field"><label for="password">كلمة المرور${setup ? ' (6 أحرف على الأقل)' : ''}</label><input id="password" name="password" type="password" class="ltr-input" autocomplete="${setup ? 'new-password' : 'current-password'}" required></div>
+    <button class="btn" type="submit" style="min-height:48px;font-size:16px">${setup ? 'إنشاء الحساب والدخول' : 'دخول'}</button></form></section></div>`;
+}
+let authError = '';
+
+/* ----- لوحة التحكم ----- */
+function pgDashboard() {
+  const now = new Date(), ym = todayStr().slice(0, 7), mName = MONTHS[now.getMonth()];
+  const act = db.students.filter(s => s.status === 'نشط'), stopped = db.students.length - act.length;
+  const inM = db.receipts.filter(r => monthStr(r.date) === ym).reduce((a, r) => a + num(r.amount), 0);
+  const outM = db.expenses.filter(x => monthStr(x.date) === ym).reduce((a, x) => a + num(x.amount), 0);
+  const months = [];
+  for (let i = 5; i >= 0; i--) { const d = new Date(now.getFullYear(), now.getMonth() - i, 1); const k = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+    months.push({k, label: MONTHS[d.getMonth()], in: db.receipts.filter(r => monthStr(r.date) === k).reduce((a, r) => a + num(r.amount), 0), out: db.expenses.filter(x => monthStr(x.date) === k).reduce((a, x) => a + num(x.amount), 0)}); }
+  const mx = Math.max(1, ...months.flatMap(m => [m.in, m.out]));
+  const byClass = [...db.classes.map(c => ({name: c.name, n: act.filter(s => s.classId === c.id).length})), {name: 'بدون فصل', n: act.filter(s => !cls(s.classId)).length}].filter(c => c.n > 0);
+  const recent = [...db.receipts].sort((a, b) => a.date < b.date ? 1 : a.date > b.date ? -1 : b.id - a.id).slice(0, 5);
+  const late = act.filter(s => num(s.fee) > 0 && !db.receipts.some(r => r.studentId === s.id && r.month === mName && r.date.slice(0, 4) === String(now.getFullYear())));
+  return `<header class="page-head"><div><h1>لوحة التحكم</h1><p>${DAYS[now.getDay()]} ${now.getDate()} ${mName} ${now.getFullYear()} · ملخص الشهر</p></div>
+    <div class="actions">${can('expenses') ? '<a class="btn btn-outline" href="#/expenses">تسجيل مصروف</a>' : ''}<a class="btn" href="#/receipts">${icon('plus', 18)} إيصال جديد</a></div></header>
+  <section class="grid">
+    <div class="stat"><div class="label">الطلاب النشطون</div><div class="value">${act.length} <small>طالبًا</small></div><div class="note">${stopped} طالب متوقف</div></div>
+    <div class="stat"><div class="label">تحصيلات ${mName}</div><div class="value pos">${fmt(inM)} <small>${CUR}</small></div></div>
+    <div class="stat"><div class="label">مصروفات ${mName}</div><div class="value neg">${fmt(outM)} <small>${CUR}</small></div></div>
+    <div class="stat dark"><div class="label">رصيد الصندوق</div><div class="value">${fmt(currentBalance())} <small>${CUR}</small></div><div class="note">محسوب من حركة الصندوق</div></div></section>
+  <section class="two-col"><div class="wide">
+    <div class="card"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px"><div><h2>التحصيلات والمصروفات</h2><p class="sub">آخر 6 أشهر · بالجنيه</p></div>
+      <div class="legend"><span><i style="background:#0F766E"></i>التحصيلات</span><span><i style="background:#F4B63F"></i>المصروفات</span></div></div>
+      <div><div class="chart">${months.map(m => `<div class="col"><div class="b"><span>${fmt(m.in)}</span><i style="height:${Math.round(m.in / mx * 190)}px;background:#0F766E"></i></div><div class="b"><span>${fmt(m.out)}</span><i style="height:${Math.round(m.out / mx * 190)}px;background:#F4B63F"></i></div></div>`).join('')}</div>
+      <div class="chart-labels">${months.map(m => `<div>${m.label}</div>`).join('')}</div></div></div>
+    <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h2>آخر التحصيلات</h2><a class="code" href="#/receipts">عرض الكل</a></div>
+      <div class="table-wrap"><table><thead><tr><th>رقم الإيصال</th><th>الطالب</th><th>الشهر</th><th>المبلغ</th><th>طريقة الدفع</th><th>التاريخ</th></tr></thead><tbody>
+      ${recent.map(r => { const s = stu(r.studentId); return `<tr><td class="code"><span class="ltr">${esc(r.no)}</span></td><td>${esc(s ? s.name : '—')}</td><td>${esc(r.month)}</td><td class="num"><strong>${fmt(r.amount)}</strong></td><td>${esc(r.method)}</td><td class="muted">${fd(r.date)}</td></tr>`; }).join('') || '<tr><td colspan="6" class="empty">لا توجد تحصيلات بعد.</td></tr>'}
+      </tbody></table></div></div></div>
+  <div class="side">
+    <div class="card"><div><h2>الطلاب حسب الفصل</h2><p class="sub">${act.length} طالبًا نشطًا</p></div><div class="bar-list">
+      ${byClass.map(c => { const p = Math.round(c.n / act.length * 100); return `<div><div style="display:flex;justify-content:space-between;margin-bottom:8px"><strong>${esc(c.name)}</strong><span class="muted">${c.n} طالبًا · ${p}%</span></div><div class="bar-track"><div class="bar-fill teal" style="width:${p}%"></div></div></div>`; }).join('') || '<div class="empty">لا يوجد طلاب بعد.</div>'}</div></div>
+    <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h2>لم يسددوا ${mName}</h2><span class="badge b-red">${late.length}</span></div>
+      ${late.length ? `<ul style="list-style:none;margin:0;padding:0">${late.slice(0, 8).map(s => `<li style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #EFEAE0"><span class="avatar" style="background:#FDF1D8;color:#7A4B00">${esc(s.name.charAt(0))}</span><span style="flex:1;min-width:0"><strong>${esc(s.name)}</strong><br><span class="muted" style="font-size:13px">${esc(cls(s.classId) ? cls(s.classId).name : 'بدون فصل')}</span></span><strong>${fmt(s.fee)} ${CUR}</strong></li>`).join('')}</ul>${late.length > 8 ? `<p class="muted">و ${late.length - 8} آخرين...</p>` : ''}` : '<div class="empty">الجميع سدّد رسوم الشهر.</div>'}</div>
+  </div></section>`;
+}
+
+/* ----- الطلاب والفصول ----- */
+function pgStudents() {
+  const st = ui.stu, q = st.q.trim().toLowerCase();
+  let rows = db.students.filter(s => (!q || [s.name, s.code, s.phone, s.parent].some(v => String(v || '').toLowerCase().includes(q))) && (st.c === '0' || String(s.classId) === st.c)).reverse();
+  const total = rows.length; rows = paged('stu', rows);
+  const ed = st.edit ? stu(st.edit) : null, edc = st.editClass ? cls(st.editClass) : null;
+  const edit = can('students_edit');
+  const classOpts = [[0, 'بدون فصل'], ...db.classes.map(c => [c.id, c.name])];
+  return `<header class="page-head"><div><h1>الطلاب والفصول</h1><p>${db.students.length} طالبًا مسجلًا · ${db.students.filter(s => s.status === 'نشط').length} نشطًا · ${db.classes.length} فصول</p></div>
+    ${edit ? `<div class="actions"><a class="btn" href="#student-form" data-act="goform">${icon('plus', 18)} إضافة طالب</a></div>` : ''}</header>
+  <section class="two-col"><div class="wide"><div class="card">
+    <form class="filters" data-form="stu-filter"><div class="field" style="flex:2 1 220px"><label for="q">بحث</label><input id="q" name="q" type="search" value="${esc(st.q)}" placeholder="الاسم أو الكود أو الهاتف أو ولي الأمر"></div>
+      <div class="field"><label for="c">الفصل</label><select id="c" name="c" data-change="stu-filter"><option value="0">كل الفصول</option>${opt(db.classes.map(c => [c.id, c.name]), st.c)}</select></div>
+      <button class="btn" type="submit">${icon('search', 18)} بحث</button></form>
+    <div class="table-wrap"><table><thead><tr><th>الطالب</th><th>الفصل</th><th>ولي الأمر</th><th>الهاتف</th><th>الرسوم</th><th>الحالة</th>${edit ? '<th></th>' : ''}</tr></thead><tbody>
+    ${rows.map(s => `<tr><td><strong>${esc(s.name)}</strong><br><span class="muted" style="font-size:12.5px"><span class="ltr">${esc(s.code)}</span></span></td><td>${esc(cls(s.classId) ? cls(s.classId).name : '—')}</td><td>${esc(s.parent)}</td><td><span class="ltr">${esc(s.phone)}</span></td><td class="num"><strong>${fmt(s.fee)}</strong></td><td><span class="badge ${s.status === 'نشط' ? 'b-green' : 'b-gray'}">${esc(s.status)}</span></td>
+      ${edit ? `<td style="white-space:nowrap"><button type="button" class="btn btn-icon" data-act="stu-edit" data-id="${s.id}" aria-label="تعديل ${esc(s.name)}">${icon('edit', 18)}</button>${can('students_delete') ? `<button type="button" class="btn btn-icon danger" data-act="stu-del" data-id="${s.id}" aria-label="حذف ${esc(s.name)}">${icon('trash', 18)}</button>` : ''}</td>` : ''}</tr>`).join('') || `<tr><td colspan="7" class="empty">${db.students.length ? 'لا يوجد طلاب مطابقون.' : 'لم تُضف أي طلاب بعد. ابدأ بالنموذج على اليسار.'}</td></tr>`}
+    </tbody></table></div>
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px"><span class="muted">عرض ${rows.length} من ${total} طالبًا</span>${pager('stu', total)}</div></div></div>
+  <div class="side">
+    ${edit ? `<form class="card form" data-form="student" id="student-form"><h2>${ed ? 'تعديل بيانات الطالب' : 'إضافة طالب جديد'}</h2>
+      <div class="row"><div class="field"><label for="f-code">كود الطالب</label><input id="f-code" class="ltr-input" type="text" readonly value="${esc(ed ? ed.code : nextStudentCode())}"></div>
+      <div class="field"><label for="f-birth">تاريخ الميلاد</label><input id="f-birth" name="birth" type="date" value="${esc(ed ? ed.birth : '')}"></div></div>
+      <div class="field"><label for="f-name">اسم الطالب</label><input id="f-name" name="name" type="text" required value="${esc(ed ? ed.name : '')}"></div>
+      <div class="row"><div class="field"><label for="f-parent">اسم ولي الأمر</label><input id="f-parent" name="parent" type="text" value="${esc(ed ? ed.parent : '')}"></div>
+      <div class="field"><label for="f-phone">رقم الهاتف</label><input id="f-phone" name="phone" type="tel" class="ltr-input" value="${esc(ed ? ed.phone : '')}"></div></div>
+      <div class="field"><label for="f-address">العنوان</label><textarea id="f-address" name="address" rows="2">${esc(ed ? ed.address : '')}</textarea></div>
+      <div class="row"><div class="field"><label for="f-class">الفصل</label><select id="f-class" name="classId">${opt(classOpts, ed ? ed.classId : 0)}</select></div>
+      <div class="field"><label for="f-fee">الرسوم الشهرية (${CUR})</label><input id="f-fee" name="fee" type="number" step="0.01" min="0" value="${esc(ed ? ed.fee : 0)}"></div>
+      <div class="field"><label for="f-status">الحالة</label><select id="f-status" name="status">${opt([['نشط','نشط'],['متوقف','متوقف']], ed ? ed.status : 'نشط')}</select></div></div>
+      <div class="form-actions"><button class="btn" type="submit">${ed ? 'حفظ التعديلات' : 'حفظ الطالب'}</button>${ed ? '<button type="button" class="btn btn-outline" data-act="stu-cancel">إلغاء</button>' : ''}</div></form>` : ''}
+    <div class="card"><h2>الفصول</h2>
+      ${db.classes.map(c => { const all = db.students.filter(s => s.classId === c.id); return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid #EFEAE0"><span class="badge b-teal" style="min-width:56px;text-align:center">${esc(c.name)}</span><span style="flex:1" class="muted">${all.filter(s => s.status === 'نشط').length} نشط · ${all.length} إجمالي</span>
+        ${can('classes') ? `<button type="button" class="btn btn-icon" data-act="cls-edit" data-id="${c.id}" aria-label="تعديل الفصل ${esc(c.name)}">${icon('edit', 18)}</button>` : ''}${can('students_delete') ? `<button type="button" class="btn btn-icon danger" data-act="cls-del" data-id="${c.id}" aria-label="حذف الفصل ${esc(c.name)}">${icon('trash', 18)}</button>` : ''}</div>`; }).join('')}
+      ${can('classes') ? `<form class="form" data-form="class" style="border-top:1px solid #EFEAE0;padding-top:16px"><div class="field"><label for="class_name">${edc ? 'تعديل اسم الفصل' : 'إضافة فصل جديد'}</label><input id="class_name" name="name" type="text" required value="${esc(edc ? edc.name : '')}"></div>
+        <div class="form-actions"><button class="btn btn-outline" type="submit">${edc ? 'حفظ' : 'إضافة الفصل'}</button>${edc ? '<button type="button" class="btn btn-outline" data-act="cls-cancel">إلغاء</button>' : ''}</div></form>` : ''}</div>
+  </div></section>`;
+}
+
+/* ----- التحصيلات ----- */
+function pgReceipts() {
+  const st = ui.rec, q = st.q.trim().toLowerCase();
+  let rows = [...db.receipts].sort((a, b) => a.date < b.date ? 1 : a.date > b.date ? -1 : b.id - a.id)
+    .filter(r => { const s = stu(r.studentId); return (!q || (s && s.name.toLowerCase().includes(q)) || r.no.toLowerCase().includes(q)) && (!st.m || r.month === st.m) && (!st.p || r.method === st.p); });
+  const total = rows.length; rows = paged('rec', rows);
+  const t = todayStr(), ym = t.slice(0, 7), cm = MONTHS[new Date().getMonth()];
+  const todayT = db.receipts.filter(r => r.date === t).reduce((a, r) => a + num(r.amount), 0);
+  const monthT = db.receipts.filter(r => monthStr(r.date) === ym).reduce((a, r) => a + num(r.amount), 0);
+  const act = db.students.filter(s => s.status === 'نشط').sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+  return `<header class="page-head"><div><h1>التحصيلات</h1><p>رسوم الطلاب الشهرية · ${cm} ${new Date().getFullYear()}</p></div></header>
+  <section class="two-col"><div class="wide">
+    <div class="grid"><div class="stat"><div class="label">تحصيلات اليوم</div><div class="value">${fmt(todayT)} <small>${CUR}</small></div></div><div class="stat"><div class="label">تحصيلات ${cm}</div><div class="value">${fmt(monthT)} <small>${CUR}</small></div></div></div>
+    <div class="card"><h2>سجل الإيصالات</h2>
+      <form class="filters" data-form="rec-filter"><div class="field" style="flex:2 1 200px"><label for="q">بحث</label><input id="q" name="q" type="search" value="${esc(st.q)}" placeholder="اسم الطالب أو رقم الإيصال"></div>
+      <div class="field"><label for="m">الشهر</label><select id="m" name="m" data-change="rec-filter"><option value="">كل الشهور</option>${opt(MONTHS.map(m => [m, m]), st.m)}</select></div>
+      <div class="field"><label for="p">طريقة الدفع</label><select id="p" name="p" data-change="rec-filter"><option value="">الكل</option>${opt(METHODS.map(m => [m, m]), st.p)}</select></div>
+      <button class="btn" type="submit">${icon('search', 18)} تصفية</button></form>
+      <div class="table-wrap"><table><thead><tr><th>رقم الإيصال</th><th>الطالب</th><th>الشهر</th><th>المبلغ</th><th>طريقة الدفع</th><th>التاريخ</th><th></th></tr></thead><tbody>
+      ${rows.map(r => { const s = stu(r.studentId); return `<tr><td class="code"><span class="ltr">${esc(r.no)}</span></td><td>${esc(s ? s.name : '—')}</td><td>${esc(r.month)}</td><td class="num"><strong>${fmt(r.amount)}</strong></td><td>${esc(r.method)}</td><td class="muted">${fd(r.date)}</td>
+        <td style="white-space:nowrap"><a class="btn btn-icon" href="#/receipt/${r.id}" aria-label="طباعة الإيصال ${esc(r.no)}">${icon('print', 18)}</a>${can('receipts_delete') ? `<button type="button" class="btn btn-icon danger" data-act="rec-del" data-id="${r.id}" aria-label="حذف الإيصال ${esc(r.no)}">${icon('trash', 18)}</button>` : ''}</td></tr>`; }).join('') || '<tr><td colspan="7" class="empty">لا توجد إيصالات مطابقة.</td></tr>'}
+      </tbody></table></div>
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px"><span class="muted">عرض ${rows.length} من ${total} إيصالًا</span>${pager('rec', total)}</div></div></div>
+  <div class="side"><form class="card form" data-form="receipt"><h2>إصدار إيصال جديد</h2>
+    <div class="field"><label for="r-no">رقم الإيصال</label><input id="r-no" class="ltr-input" type="text" readonly value="${esc(nextReceiptNo(t))}"></div>
+    <div class="field"><label for="student_id">الطالب</label><select id="student_id" name="studentId" required data-change="rec-student"><option value="">${act.length ? 'اختر الطالب' : 'أضف طالبًا أولًا من صفحة الطلاب'}</option>${act.map(s => `<option value="${s.id}" data-fee="${esc(s.fee)}">${esc(s.name)} — ${esc(s.code)}</option>`).join('')}</select></div>
+    <div class="row"><div class="field"><label for="payment_date">تاريخ السداد</label><input id="payment_date" name="date" type="date" value="${t}" required></div>
+    <div class="field"><label for="month_name">عن شهر</label><select id="month_name" name="month">${opt(MONTHS.map(m => [m, m]), cm)}</select></div></div>
+    <div class="field"><label for="amount">المبلغ (${CUR})</label><input id="amount" name="amount" type="number" step="0.01" min="0.01" required placeholder="يُملأ من رسوم الطالب"></div>
+    <div class="field"><label for="payment_method">طريقة الدفع</label><select id="payment_method" name="method">${opt(METHODS.map(m => [m, m]), METHODS[0])}</select></div>
+    <div class="field"><label for="notes">ملاحظات</label><textarea id="notes" name="notes" rows="3"></textarea></div>
+    <div class="form-actions" style="flex-direction:column"><button class="btn" type="submit" name="then" value="print">حفظ وطباعة الإيصال</button><button class="btn btn-outline" type="submit" name="then" value="">حفظ فقط</button></div></form></div></section>`;
+}
+function pgReceiptPrint(id) {
+  const r = db.receipts.find(x => x.id === id);
+  if (!r) return `<div class="card"><h2>الإيصال غير موجود</h2><a class="btn btn-outline" href="#/receipts">رجوع للتحصيلات</a></div>`;
+  const s = stu(r.studentId) || {name: 'طالب محذوف', parent: ''}, c = s.classId ? cls(s.classId) : null, w = amountWords(num(r.amount));
+  return `<div class="actions no-print"><button type="button" class="btn" data-act="print">${icon('print', 18)} طباعة</button><a class="btn btn-outline" href="#/receipts">رجوع للتحصيلات</a></div>
+  <div class="receipt"><div class="receipt-head"><div><div style="font-size:20px;font-weight:700">${esc(db.name)}</div><div class="muted" style="margin-top:2px">إيصال استلام نقدية</div></div>
+    <div style="font-size:14px"><div>رقم: <strong class="code"><span class="ltr">${esc(r.no)}</span></strong></div><div class="muted" style="margin-top:2px">التاريخ: ${fd(r.date)}</div></div></div>
+    <div style="display:flex;flex-direction:column;gap:12px;font-size:15.5px">
+    <div class="receipt-line"><span class="k">استلمنا من</span><strong>${s.parent ? 'السيد/ة ' + esc(s.parent) + ' — ولي أمر الطالب ' : 'ولي أمر الطالب '}${esc(s.name)}</strong></div>
+    <div class="receipt-line"><span class="k">مبلغًا وقدره</span><strong>${fmt(r.amount)} ${CUR}</strong>${w ? `<span class="muted">(${esc(w)})</span>` : ''}</div>
+    <div class="receipt-line"><span class="k">وذلك عن</span><strong>رسوم شهر ${esc(r.month)}${c ? ' · فصل ' + esc(c.name) : ''}</strong></div>
+    <div class="receipt-line"><span class="k">طريقة الدفع</span><strong>${esc(r.method)}</strong></div>
+    ${r.notes ? `<div class="receipt-line"><span class="k">ملاحظات</span><span>${esc(r.notes)}</span></div>` : ''}</div>
+    <div class="receipt-sign"><div>المحاسب</div><div>ولي الأمر</div></div></div>`;
+}
+
+/* ----- المصروفات ----- */
+function pgExpenses() {
+  const st = ui.exp, inMonth = db.expenses.filter(x => monthStr(x.date) === st.month);
+  const total = inMonth.reduce((a, x) => a + num(x.amount), 0);
+  const byType = db.types.map(t => ({name: t.name, v: inMonth.filter(x => x.typeId === t.id).reduce((a, x) => a + num(x.amount), 0)})).filter(t => t.v > 0).sort((a, b) => b.v - a.v);
+  const mxT = byType.length ? byType[0].v : 1;
+  let rows = inMonth.filter(x => st.t === '0' || String(x.typeId) === st.t).sort((a, b) => a.date < b.date ? 1 : a.date > b.date ? -1 : b.id - a.id);
+  const cnt = rows.length; rows = paged('exp', rows);
+  const [y, m] = st.month.split('-');
+  return `<header class="page-head"><div><h1>المصروفات</h1><p>${MONTHS[+m - 1]} ${y} · مرتبات وإيجار وفواتير وأنشطة</p></div>
+    <form class="filters" data-form="exp-month" style="align-items:center"><label for="month" class="muted">الشهر</label><input id="month" name="month" type="month" value="${esc(st.month)}" data-change="exp-month" style="width:auto"></form></header>
+  <section class="two-col"><div class="wide">
+    <div class="grid"><div class="stat"><div class="label">إجمالي مصروفات الشهر</div><div class="value neg">${fmt(total)} <small>${CUR}</small></div></div>
+    <div class="stat"><div class="label">أكبر بند</div><div class="value" style="font-size:24px">${byType.length ? esc(byType[0].name) : '—'}</div><div class="note">${byType.length && total ? Math.round(byType[0].v / total * 100) + '% من الإجمالي' : ''}</div></div></div>
+    <div class="card"><h2>المصروفات حسب النوع</h2><div class="bar-list">${byType.map(t => `<div class="bar-item"><div class="name">${esc(t.name)}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.max(2, Math.round(t.v / mxT * 100))}%"></div></div><div class="bar-val"><strong>${fmt(t.v)}</strong> ${CUR} · ${Math.round(t.v / total * 100)}%</div></div>`).join('') || '<div class="empty">لا توجد مصروفات في هذا الشهر.</div>'}</div></div>
+    <div class="card"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px"><h2>سجل المصروفات</h2>
+      <div class="field" style="min-width:180px"><label for="t" class="muted">النوع</label><select id="t" data-change="exp-type"><option value="0">كل الأنواع</option>${opt(db.types.map(t => [t.id, t.name]), st.t)}</select></div></div>
+      <div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>النوع</th><th>البيان</th><th>المرجع</th><th>المبلغ</th><th></th></tr></thead><tbody>
+      ${rows.map(x => { const t = typ(x.typeId); return `<tr><td class="muted">${fd(x.date)}</td><td><span class="badge b-amber">${esc(t ? t.name : 'غير محدد')}</span></td><td>${esc(x.desc)}</td><td class="muted"><span class="ltr">${expRef(x)}</span></td><td class="num"><strong>${fmt(x.amount)}</strong></td>
+        <td><button type="button" class="btn btn-icon danger" data-act="exp-del" data-id="${x.id}" aria-label="حذف المصروف">${icon('trash', 18)}</button></td></tr>`; }).join('') || '<tr><td colspan="6" class="empty">لا توجد مصروفات مطابقة.</td></tr>'}
+      </tbody></table></div>${pager('exp', cnt)}</div></div>
+  <div class="side"><form class="card form" data-form="expense"><h2>تسجيل مصروف جديد</h2>
+    <div class="field"><label for="expense_date">تاريخ المصروف</label><input id="expense_date" name="date" type="date" value="${todayStr()}" required></div>
+    <div class="field"><label for="type_id">نوع المصروف</label><select id="type_id" name="typeId" required>${opt(db.types.map(t => [t.id, t.name]), '')}</select></div>
+    <div class="field"><label for="description">البيان</label><textarea id="description" name="desc" rows="3" placeholder="مثال: فاتورة الكهرباء لشهر أكتوبر"></textarea></div>
+    <div class="field"><label for="amount">المبلغ (${CUR})</label><input id="amount" name="amount" type="number" step="0.01" min="0.01" required placeholder="0.00"></div>
+    <p class="hint" style="line-height:1.7">يُسجَّل المصروف تلقائيًا في اليومية وحركة الصندوق ويُخصم من الرصيد.</p>
+    <div class="form-actions"><button class="btn" type="submit">حفظ المصروف</button></div></form>
+  <form class="card form" data-form="type"><h2>إضافة نوع مصروف</h2><div class="field"><label for="type_name">اسم النوع</label><input id="type_name" name="name" type="text" required></div><div class="form-actions"><button class="btn btn-outline" type="submit">إضافة النوع</button></div></form></div></section>`;
+}
+
+/* ----- اليومية والصندوق ----- */
+function pgJournal() {
+  const {from, to} = ui.jr, all = journalEntries();
+  const before = all.filter(e => e.date < from), opening = before.length ? before[before.length - 1].bal : 0;
+  const rows = all.filter(e => e.date >= from && e.date <= to);
+  const tin = rows.reduce((a, e) => a + e.in, 0), tout = rows.reduce((a, e) => a + e.out, 0);
+  return `<header class="page-head"><div><h1>اليومية والصندوق</h1><p>تُحدَّث تلقائيًا من التحصيلات والمصروفات</p></div><div class="actions"><button type="button" class="btn btn-outline" data-act="print">${icon('print', 18)} طباعة اليومية</button></div></header>
+  <section class="grid"><div class="stat"><div class="label">رصيد أول الفترة</div><div class="value">${fmt(opening)} <small>${CUR}</small></div><div class="note">قبل ${fd(from)}</div></div>
+    <div class="stat"><div class="label">إجمالي الوارد</div><div class="value pos">${fmt(tin)} <small>${CUR}</small></div><div class="note">تحصيلات الطلاب</div></div>
+    <div class="stat"><div class="label">إجمالي المنصرف</div><div class="value neg">${fmt(tout)} <small>${CUR}</small></div><div class="note">كل المصروفات</div></div>
+    <div class="stat dark"><div class="label">رصيد آخر الفترة</div><div class="value">${fmt(r2(opening + tin - tout))} <small>${CUR}</small></div><div class="note">الرصيد الحالي للصندوق: ${fmt(currentBalance())}</div></div></section>
+  <section class="card"><div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px"><h2>حركة اليومية <span class="muted" style="font-size:14px;font-weight:500">(${fd(from)} – ${fd(to)})</span></h2>
+    <form class="filters" data-form="jr"><div class="field"><label for="from">من</label><input id="from" name="from" type="date" value="${from}"></div><div class="field"><label for="to">إلى</label><input id="to" name="to" type="date" value="${to}"></div><button class="btn" type="submit">عرض</button></form></div>
+    <div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>النوع</th><th>المرجع</th><th>البيان</th><th>وارد</th><th>منصرف</th><th>الرصيد</th></tr></thead><tbody>
+    ${rows.map(e => `<tr><td class="muted">${fd(e.date)}</td><td><span class="badge ${e.type === 'تحصيل' ? 'b-green' : 'b-red'}">${e.type}</span></td><td class="muted"><span class="ltr">${esc(e.ref)}</span></td><td>${esc(e.desc)}</td><td class="num pos"><strong>${e.in > 0 ? fmt(e.in) : '—'}</strong></td><td class="num neg"><strong>${e.out > 0 ? fmt(e.out) : '—'}</strong></td><td class="num"><strong>${fmt(e.bal)}</strong></td></tr>`).join('') || '<tr><td colspan="7" class="empty">لا توجد حركات في هذه الفترة.</td></tr>'}
+    </tbody>${rows.length ? `<tfoot><tr><td colspan="4">إجمالي الفترة المعروضة</td><td class="pos">${fmt(tin)}</td><td class="neg">${fmt(tout)}</td><td></td></tr></tfoot>` : ''}</table></div></section>`;
+}
+
+/* ----- المستخدمون ----- */
+function pgUsers() {
+  const ed = ui.usr.edit ? db.users.find(u => u.id === ui.usr.edit) : null, badge = {'مدير':'b-dark','محاسب':'b-teal','موظف':'b-gray'};
+  return `<header class="page-head"><div><h1>المستخدمون</h1><p>حسابات الدخول للنظام وأدوارها</p></div></header>
+  <section class="two-col"><div class="wide"><div class="card"><h2>قائمة المستخدمين</h2><div class="table-wrap"><table><thead><tr><th>الاسم الكامل</th><th>اسم المستخدم</th><th>الدور</th><th>تاريخ الإنشاء</th><th></th></tr></thead><tbody>
+    ${db.users.map(u => `<tr><td><span style="display:flex;align-items:center;gap:10px"><span class="avatar" style="width:36px;height:36px;background:#FDF1D8;color:#7A4B00">${esc(u.name.charAt(0))}</span><strong>${esc(u.name)}</strong></span></td><td><span class="ltr">${esc(u.username)}</span></td><td><span class="badge ${badge[u.role]}">${esc(u.role)}</span></td><td class="muted">${fd(u.created)}</td>
+    <td style="white-space:nowrap"><button type="button" class="btn btn-icon" data-act="usr-edit" data-id="${u.id}" aria-label="تعديل ${esc(u.name)}">${icon('edit', 18)}</button>${u.id !== uid ? `<button type="button" class="btn btn-icon danger" data-act="usr-del" data-id="${u.id}" aria-label="حذف ${esc(u.name)}">${icon('trash', 18)}</button>` : ''}</td></tr>`).join('')}
+    </tbody></table></div></div>
+    <div class="card"><div><h2>الأدوار والصلاحيات</h2><p class="sub">الصلاحيات مطبّقة فعليًا في النظام</p></div><div class="role-cards">
+    <div><span class="badge b-dark">مدير</span><p>كل الصلاحيات، بما فيها إدارة المستخدمين وحذف الطلاب والنسخ الاحتياطي.</p></div>
+    <div><span class="badge b-teal">محاسب</span><p>التحصيلات والمصروفات واليومية والصندوق، وعرض الطلاب.</p></div>
+    <div><span class="badge b-gray">موظف</span><p>بيانات الطلاب والفصول وإصدار الإيصالات فقط.</p></div></div></div></div>
+  <div class="side"><form class="card form" data-form="user" autocomplete="off"><h2>${ed ? 'تعديل مستخدم' : 'إضافة مستخدم'}</h2>
+    <div class="field"><label for="full_name">الاسم الكامل</label><input id="full_name" name="name" type="text" required value="${esc(ed ? ed.name : '')}"></div>
+    <div class="field"><label for="username">اسم المستخدم</label><input id="username" name="username" type="text" class="ltr-input" required value="${esc(ed ? ed.username : '')}"></div>
+    <div class="field"><label for="password">${ed ? 'كلمة مرور جديدة (اتركها فارغة لعدم التغيير)' : 'كلمة المرور'}</label><input id="password" name="password" type="password" class="ltr-input" ${ed ? '' : 'required'} autocomplete="new-password"><span class="hint">6 أحرف على الأقل.</span></div>
+    <div class="field"><label for="role">الدور</label><select id="role" name="role">${opt(ROLES.map(r => [r, r]), ed ? ed.role : 'موظف')}</select></div>
+    <div class="form-actions"><button class="btn" type="submit">${ed ? 'حفظ التعديلات' : 'إضافة المستخدم'}</button>${ed ? '<button type="button" class="btn btn-outline" data-act="usr-cancel">إلغاء</button>' : ''}</div></form></div></section>`;
+}
+
+/* ----- النسخ والإعدادات ----- */
+function pgSettings() {
+  return `<header class="page-head"><div><h1>النسخ والإعدادات</h1><p>احفظ بياناتك واسم الحضانة</p></div></header>
+  <div class="warn"><strong>مهم:</strong> بيانات النظام محفوظة داخل هذا المتصفح على هذا الجهاز فقط. لو مسحت بيانات المتصفح أو غيّرت الجهاز تضيع. حمّل نسخة احتياطية بشكل منتظم (مثلًا آخر كل أسبوع) واحتفظ بها في مكان آمن.</div>
+  <section class="two-col"><div class="wide"><div class="card"><div><h2>النسخة الاحتياطية</h2><p class="sub">ملف واحد فيه كل الطلاب والإيصالات والمصروفات والمستخدمين</p></div>
+    <div class="actions"><button type="button" class="btn" data-act="backup">تحميل نسخة احتياطية</button></div>
+    <form class="form" data-form="restore" style="border-top:1px solid #EFEAE0;padding-top:16px"><div class="field"><label for="file">استرجاع من نسخة سابقة</label><input id="file" name="file" type="file" accept=".json,application/json" required style="min-height:44px"><span class="hint">سيستبدل الاسترجاع كل البيانات الحالية.</span></div>
+    <div class="form-actions"><button class="btn btn-outline" type="submit">استرجاع النسخة</button></div></form></div></div>
+  <div class="side"><form class="card form" data-form="name"><h2>اسم الحضانة</h2><div class="field"><label for="nm">يظهر في الإيصالات وصفحة الدخول</label><input id="nm" name="name" type="text" required value="${esc(db.name)}"></div><div class="form-actions"><button class="btn" type="submit">حفظ الاسم</button></div></form></div></section>`;
+}
+
+/* ============ التوجيه والرسم ============ */
+function render() {
+  if (!db.users.length) { root.innerHTML = authView(true); authError = ''; return; }
+  const u = me();
+  if (!u) { uid = null; root.innerHTML = authView(false); authError = ''; return; }
+  const parts = (location.hash || '#/').replace(/^#\/?/, '').split('/');
+  let page = parts[0] || 'dashboard', html;
+  const permOf = {dashboard:'dashboard', students:'students_view', receipts:'receipts', receipt:'receipts', expenses:'expenses', journal:'journal', users:'users', settings:'settings'};
+  if (!permOf[page]) page = 'dashboard';
+  if (!can(permOf[page])) { root.innerHTML = layout('', '<div class="card"><h2>ليس لديك صلاحية لفتح هذه الصفحة</h2><p><a class="btn btn-outline" href="#/">العودة للوحة التحكم</a></p></div>'); return; }
+  if (page === 'dashboard') html = pgDashboard();
+  else if (page === 'students') html = pgStudents();
+  else if (page === 'receipts') html = pgReceipts();
+  else if (page === 'receipt') html = pgReceiptPrint(+parts[1]);
+  else if (page === 'expenses') html = pgExpenses();
+  else if (page === 'journal') html = pgJournal();
+  else if (page === 'users') html = pgUsers();
+  else html = pgSettings();
+  root.innerHTML = layout(page === 'receipt' ? 'receipts' : page, html);
+}
+window.addEventListener('hashchange', () => { render(); window.scrollTo(0, 0); });
+
+/* ============ النماذج ============ */
+const forms = {
+  async setup(f) {
+    const name = f.get('full_name').trim(), un = f.get('username').trim(), pw = f.get('password');
+    if (!/^[A-Za-z0-9_.-]{3,50}$/.test(un)) { authError = 'اسم المستخدم: حروف إنجليزية وأرقام فقط (3 أحرف على الأقل).'; return render(); }
+    if (pw.length < 6) { authError = 'كلمة المرور 6 أحرف على الأقل.'; return render(); }
+    const id = nid(); db.users.push({id, username: un, name, role: 'مدير', hash: await hashPw(pw), created: todayStr()});
+    save(); uid = id; try { sessionStorage.setItem('uid', id); } catch (e) {} location.hash = '#/'; render();
+  },
+  async login(f) {
+    const un = f.get('username').trim().toLowerCase(), h = await hashPw(f.get('password'));
+    const u = db.users.find(x => x.username.toLowerCase() === un && x.hash === h);
+    if (!u) { authError = 'اسم المستخدم أو كلمة المرور غير صحيحة.'; return render(); }
+    uid = u.id; try { sessionStorage.setItem('uid', u.id); } catch (e) {} location.hash = '#/'; render();
+  },
+  'stu-filter'(f) { ui.stu.q = f.get('q') || ''; ui.stu.c = f.get('c') || '0'; ui.stu.page = 1; render(); },
+  student(f) {
+    if (!can('students_edit')) return;
+    const name = f.get('name').trim(), fee = num(f.get('fee'));
+    if (!name) { flash('اسم الطالب مطلوب.', 'error'); return render(); }
+    if (fee < 0) { flash('الرسوم الشهرية غير صحيحة.', 'error'); return render(); }
+    const data = {name, birth: f.get('birth') || '', parent: f.get('parent').trim(), phone: f.get('phone').trim(), address: f.get('address').trim(), classId: +f.get('classId') || 0, fee, status: f.get('status') === 'متوقف' ? 'متوقف' : 'نشط'};
+    if (ui.stu.edit) { Object.assign(stu(ui.stu.edit), data); flash('تم تعديل بيانات الطالب.'); }
+    else { db.stuSeq++; db.students.push({id: nid(), code: 'S-' + pad(db.stuSeq, 4), ...data}); flash('تمت إضافة الطالب.'); }
+    ui.stu.edit = null; save(); render();
+  },
+  'class'(f) {
+    if (!can('classes')) return;
+    const name = f.get('name').trim(); if (!name) return;
+    if (ui.stu.editClass) { cls(ui.stu.editClass).name = name; flash('تم تعديل الفصل.'); } else { db.classes.push({id: nid(), name}); flash('تمت إضافة الفصل.'); }
+    ui.stu.editClass = null; save(); render();
+  },
+  'rec-filter'(f) { ui.rec.q = f.get('q') || ''; ui.rec.m = f.get('m') || ''; ui.rec.p = f.get('p') || ''; ui.rec.page = 1; render(); },
+  receipt(f, el, ev) {
+    const s = stu(+f.get('studentId')), date = f.get('date'), month = f.get('month'), amount = r2(f.get('amount'));
+    if (!s) { flash('اختر الطالب.', 'error'); return render(); }
+    if (!isDate(date)) { flash('تاريخ السداد غير صحيح.', 'error'); return render(); }
+    if (!(amount > 0)) { flash('المبلغ يجب أن يكون أكبر من صفر.', 'error'); return render(); }
+    const id = nid(), no = nextReceiptNo(date);
+    db.receipts.push({id, no, studentId: s.id, date, month: MONTHS.includes(month) ? month : MONTHS[0], amount, method: METHODS.includes(f.get('method')) ? f.get('method') : METHODS[0], notes: f.get('notes').trim()});
+    save(); flash(`تم إصدار الإيصال ${no}.`);
+    const then = ev && ev.submitter ? ev.submitter.value : '';
+    if (then === 'print') location.hash = '#/receipt/' + id; else render();
+  },
+  'exp-month'(f) { if (/^\d{4}-\d{2}$/.test(f.get('month'))) { ui.exp.month = f.get('month'); ui.exp.page = 1; } render(); },
+  expense(f) {
+    const date = f.get('date'), t = typ(+f.get('typeId')), amount = r2(f.get('amount'));
+    if (!isDate(date)) { flash('تاريخ المصروف غير صحيح.', 'error'); return render(); }
+    if (!t) { flash('اختر نوع المصروف.', 'error'); return render(); }
+    if (!(amount > 0)) { flash('المبلغ يجب أن يكون أكبر من صفر.', 'error'); return render(); }
+    db.expSeq++; const x = {id: nid(), seq: db.expSeq, date, typeId: t.id, desc: f.get('desc').trim(), amount};
+    db.expenses.push(x); save(); flash(`تم تسجيل المصروف ${expRef(x)}.`); render();
+  },
+  type(f) { const n = f.get('name').trim(); if (n) { db.types.push({id: nid(), name: n}); save(); flash('تمت إضافة نوع المصروف.'); } render(); },
+  jr(f) { let a = f.get('from'), b = f.get('to'); if (isDate(a) && isDate(b)) { if (a > b) [a, b] = [b, a]; ui.jr.from = a; ui.jr.to = b; } render(); },
+  async user(f) {
+    const id = ui.usr.edit, name = f.get('name').trim(), un = f.get('username').trim(), pw = f.get('password'), role = ROLES.includes(f.get('role')) ? f.get('role') : 'موظف';
+    if (!name || !un) { flash('الاسم واسم المستخدم مطلوبان.', 'error'); return render(); }
+    if (!/^[A-Za-z0-9_.-]{3,50}$/.test(un)) { flash('اسم المستخدم: حروف إنجليزية وأرقام فقط (3 أحرف على الأقل).', 'error'); return render(); }
+    if ((!id && pw.length < 6) || (id && pw && pw.length < 6)) { flash('كلمة المرور 6 أحرف على الأقل.', 'error'); return render(); }
+    if (db.users.some(u => u.username.toLowerCase() === un.toLowerCase() && u.id !== id)) { flash('اسم المستخدم مستخدم بالفعل.', 'error'); return render(); }
+    if (id) {
+      const u = db.users.find(x => x.id === id);
+      if (u.role === 'مدير' && role !== 'مدير' && db.users.filter(x => x.role === 'مدير').length <= 1) { flash('لا يمكن تغيير دور آخر مدير في النظام.', 'error'); return render(); }
+      Object.assign(u, {name, username: un, role}); if (pw) u.hash = await hashPw(pw); flash('تم تعديل المستخدم.');
+    } else { db.users.push({id: nid(), name, username: un, role, hash: await hashPw(pw), created: todayStr()}); flash('تمت إضافة المستخدم.'); }
+    ui.usr.edit = null; save(); render();
+  },
+  name(f) { db.name = f.get('name').trim() || db.name; save(); flash('تم حفظ اسم الحضانة.'); render(); },
+  restore(f) {
+    const file = f.get('file'); if (!file || !file.size) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      try {
+        const d = JSON.parse(rd.result);
+        if (!d || !Array.isArray(d.students) || !Array.isArray(d.receipts) || !Array.isArray(d.users)) throw new Error('bad');
+        if (!confirm('سيتم استبدال كل البيانات الحالية بالنسخة المختارة. متأكد؟')) return;
+        db = Object.assign(fresh(), d); save();
+        if (!me()) { uid = null; try { sessionStorage.removeItem('uid'); } catch (e) {} }
+        flash('تم استرجاع النسخة الاحتياطية.'); render();
+      } catch (e) { flash('الملف غير صالح كنسخة احتياطية.', 'error'); render(); }
+    };
+    rd.readAsText(file);
+  }
+};
+root.addEventListener('submit', e => {
+  const form = e.target.closest('form[data-form]'); if (!form) return;
+  e.preventDefault();
+  const h = forms[form.dataset.form]; if (h) h(new FormData(form), form, e);
+});
+
+/* ============ النقرات والتغييرات ============ */
+const acts = {
+  logout() { uid = null; try { sessionStorage.removeItem('uid'); } catch (e) {} location.hash = '#/'; render(); },
+  print() { window.print(); },
+  page(d) { ui[d.k].page = +d.p; render(); },
+  goform() { const f = document.getElementById('student-form'); if (f) { f.scrollIntoView(); const i = f.querySelector('input[name=name]'); if (i) i.focus(); } },
+  'stu-edit'(d) { ui.stu.edit = +d.id; render(); const f = document.getElementById('student-form'); if (f) f.scrollIntoView(); },
+  'stu-cancel'() { ui.stu.edit = null; render(); },
+  'stu-del'(d) {
+    if (!can('students_delete')) return; const s = stu(+d.id); if (!s) return;
+    if (!confirm(`حذف الطالب "${s.name}" سيحذف كل إيصالاته وحركاتها من اليومية والصندوق. متأكد؟`)) return;
+    db.receipts = db.receipts.filter(r => r.studentId !== s.id); db.students = db.students.filter(x => x.id !== s.id); save(); flash('تم حذف الطالب وإيصالاته.'); render();
+  },
+  'cls-edit'(d) { ui.stu.editClass = +d.id; render(); },
+  'cls-cancel'() { ui.stu.editClass = null; render(); },
+  'cls-del'(d) {
+    if (!can('students_delete') || !confirm('حذف الفصل؟ سيصبح طلابه بدون فصل.')) return;
+    db.students.forEach(s => { if (s.classId === +d.id) s.classId = 0; }); db.classes = db.classes.filter(c => c.id !== +d.id); save(); flash('تم حذف الفصل.'); render();
+  },
+  'rec-del'(d) {
+    if (!can('receipts_delete')) return; const r = db.receipts.find(x => x.id === +d.id); if (!r) return;
+    if (!confirm('حذف الإيصال سيحذف حركته من اليومية والصندوق. متأكد؟')) return;
+    db.receipts = db.receipts.filter(x => x.id !== r.id); save(); flash(`تم حذف الإيصال ${r.no} وحركته من اليومية والصندوق.`); render();
+  },
+  'exp-del'(d) {
+    if (!can('expenses') || !confirm('حذف المصروف سيحذف حركته من اليومية والصندوق. متأكد؟')) return;
+    db.expenses = db.expenses.filter(x => x.id !== +d.id); save(); flash('تم حذف المصروف وحركته من اليومية والصندوق.'); render();
+  },
+  'usr-edit'(d) { ui.usr.edit = +d.id; render(); },
+  'usr-cancel'() { ui.usr.edit = null; render(); },
+  'usr-del'(d) {
+    const id = +d.id, u = db.users.find(x => x.id === id);
+    if (!u || id === uid) return;
+    if (u.role === 'مدير' && db.users.filter(x => x.role === 'مدير').length <= 1) { flash('لا يمكن حذف آخر مدير في النظام.', 'error'); return render(); }
+    if (!confirm('حذف هذا المستخدم؟')) return;
+    db.users = db.users.filter(x => x.id !== id); save(); flash('تم حذف المستخدم.'); render();
+  },
+  backup() {
+    const blob = new Blob([JSON.stringify(db, null, 2)], {type: 'application/json'}), a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = `nursery-backup-${todayStr()}.json`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    flash('تم تحميل النسخة الاحتياطية.'); render();
+  }
+};
+root.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const a = acts[el.dataset.act]; if (!a) return;
+  if (el.dataset.act === 'goform') e.preventDefault();
+  a(el.dataset);
+});
+root.addEventListener('change', e => {
+  const el = e.target.closest('[data-change]'); if (!el) return;
+  const k = el.dataset.change;
+  if (k === 'stu-filter') { ui.stu.c = el.value; ui.stu.q = (document.getElementById('q') || {}).value || ''; ui.stu.page = 1; render(); }
+  else if (k === 'rec-filter') { ui.rec.m = (document.getElementById('m') || {}).value || ''; ui.rec.p = (document.getElementById('p') || {}).value || ''; ui.rec.q = (document.getElementById('q') || {}).value || ''; ui.rec.page = 1; render(); }
+  else if (k === 'rec-student') { const o = el.options[el.selectedIndex], amt = document.getElementById('amount'); if (amt && o && o.dataset.fee && amt.dataset.touched !== '1') amt.value = o.dataset.fee; }
+  else if (k === 'exp-month') { if (/^\d{4}-\d{2}$/.test(el.value)) { ui.exp.month = el.value; ui.exp.page = 1; render(); } }
+  else if (k === 'exp-type') { ui.exp.t = el.value; ui.exp.page = 1; render(); }
+});
+root.addEventListener('input', e => { if (e.target.id === 'amount') e.target.dataset.touched = '1'; });
+
+render();
+</script>
+</body>
+</html>
