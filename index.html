@@ -637,7 +637,7 @@ function gateView() {
 }
 function draw() {
   if (mode === 'firebase' && !bootError && gate !== 'ok') { root.innerHTML = gate === 'login' ? gateView() : '<div class="loading">جاري تحميل البيانات…</div>'; authError = ''; return; }
-  if (bootError) { root.innerHTML = `<div class="loading"><div><h2>${esc(bootError)}</h2><p style="margin-top:12px">${mode === 'claude' ? 'افتح الرابط من حسابك على claude.ai وتأكد أنك مسجّل الدخول، ثم أعد تحميل الصفحة.' : 'تأكدي من الإنترنت وأعيدي تحميل الصفحة. إن تكرر الخطأ ابعتي نص الرسالة.'}</p></div></div>`; return; }
+  if (bootError) { root.innerHTML = `<div class="loading"><div><h2>${esc(bootError)}</h2><p style="margin-top:12px">${mode === 'claude' ? 'افتح الرابط من حسابك على claude.ai وتأكد أنك مسجّل الدخول، ثم أعد تحميل الصفحة.' : 'تأكدي من الإنترنت وأعيدي تحميل الصفحة. إن تكرر الخطأ ابعتي نص الرسالة.'}</p><p dir="ltr" style="margin-top:12px;font-size:12px;opacity:.7;word-break:break-all">${esc(dbgLog.join(' || '))}</p></div></div>`; return; }
   if (!COLLS.every(c => loaded.has(c))) { root.innerHTML = '<div class="loading">جاري تحميل البيانات…</div>'; return; }
   if (!db.users.length) { root.innerHTML = authView(true); authError = ''; return; }
   const u = me();
@@ -845,7 +845,7 @@ root.addEventListener('input', e => { if (e.target.id) dirty.add(e.target.id); i
 
 /* ============ الاتصال بقاعدة البيانات ============ */
 const FB = window.FIREBASE_CONFIG || {};
-let mode = 'local', gate = '', fbAuth = null, fbAu = null, synced = false;
+const dbgLog = []; let mode = 'local', gate = '', fbAuth = null, fbAu = null, synced = false;
 
 function fileDl() {
   return { save: async ({filename, data}) => {
@@ -881,14 +881,14 @@ function makeFirestoreStore(fs, d) {
            doc: p => { const [c, id] = p.split('/'); return dref(c, id); } };
 }
 function startSync() {
-  const fail = e => { bootError = (e && e.code === 'permission-denied') ? 'قاعدة البيانات رفضت الوصول. راجعي قواعد الأمان (Rules) في Firebase.' : 'تعذر الاتصال بقاعدة البيانات' + (e && e.code ? ' (' + e.code + ')' : ''); render(); };
+  const fail = e => { dbgLog.push((e && e.code) + ': ' + (e && e.message)); bootError = (e && e.code === 'permission-denied') ? 'قاعدة البيانات رفضت الوصول. راجعي قواعد الأمان (Rules) في Firebase.' : 'تعذر الاتصال بقاعدة البيانات' + (e && e.code ? ' (' + e.code + ')' : ''); render(); };
   COLLS.forEach(n => store.collection(n).onSnapshot(snap => {
     db[n] = snap.docs.map(d => ({...d.data(), id: d.id}));
     if (!snap.metadata.fromCache) loaded.add(n);
     scheduleRender();
   }, fail));
   store.doc('meta/main').onSnapshot(s => { if (s.exists && s.data().name) db.name = s.data().name; scheduleRender(); }, fail);
-  setTimeout(() => { if (!COLLS.every(c => loaded.has(c)) && !bootError) { bootError = 'تأخر الاتصال بقاعدة البيانات (v3)'; render(); } }, 15000);
+  setTimeout(() => { if (!COLLS.every(c => loaded.has(c)) && !bootError) { bootError = 'تأخر الاتصال بقاعدة البيانات (v4)'; dbgLog.push('loaded ' + COLLS.filter(c => loaded.has(c)).join(',') + ' | online=' + navigator.onLine); render(); } }, 15000);
 }
 async function bootFirebase() {
   mode = 'firebase';
