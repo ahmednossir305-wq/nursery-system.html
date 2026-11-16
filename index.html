@@ -888,7 +888,7 @@ function startSync() {
     scheduleRender();
   }, fail));
   store.doc('meta/main').onSnapshot(s => { if (s.exists && s.data().name) db.name = s.data().name; scheduleRender(); }, fail);
-  setTimeout(() => { if (!COLLS.every(c => loaded.has(c)) && !bootError) { bootError = 'تأخر الاتصال بقاعدة البيانات'; render(); } }, 15000);
+  setTimeout(() => { if (!COLLS.every(c => loaded.has(c)) && !bootError) { bootError = 'تأخر الاتصال بقاعدة البيانات (v3)'; render(); } }, 15000);
 }
 async function bootFirebase() {
   mode = 'firebase';
@@ -896,7 +896,8 @@ async function bootFirebase() {
     const base = 'https://www.gstatic.com/firebasejs/10.12.2/';
     const [app, fs, au] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-firestore.js'), import(base + 'firebase-auth.js')]);
     const a = app.initializeApp(FB.config);
-    fbAu = au; fbAuth = au.getAuth(a); store = makeFirestoreStore(fs, fs.getFirestore(a));
+    fbAu = au; fbAuth = au.getAuth(a); let fdb; try { fdb = fs.initializeFirestore(a, {experimentalAutoDetectLongPolling: true}); } catch (e) { fdb = fs.getFirestore(a); }
+    store = makeFirestoreStore(fs, fdb);
     au.onAuthStateChanged(fbAuth, user => {
       if (user) { gate = 'ok'; if (!synced) { synced = true; startSync(); } } else gate = 'login';
       render();
