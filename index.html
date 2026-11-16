@@ -637,7 +637,7 @@ function gateView() {
 }
 function draw() {
   if (mode === 'firebase' && !bootError && gate !== 'ok') { root.innerHTML = gate === 'login' ? gateView() : '<div class="loading">جاري تحميل البيانات…</div>'; authError = ''; return; }
-  if (bootError) { root.innerHTML = `<div class="loading"><div><h2>${esc(bootError)}</h2><p style="margin-top:12px">افتح الرابط من حسابك على claude.ai وتأكد أنك مسجّل الدخول، ثم أعد تحميل الصفحة.</p></div></div>`; return; }
+  if (bootError) { root.innerHTML = `<div class="loading"><div><h2>${esc(bootError)}</h2><p style="margin-top:12px">${mode === 'claude' ? 'افتح الرابط من حسابك على claude.ai وتأكد أنك مسجّل الدخول، ثم أعد تحميل الصفحة.' : 'تأكدي من الإنترنت وأعيدي تحميل الصفحة. إن تكرر الخطأ ابعتي نص الرسالة.'}</p></div></div>`; return; }
   if (!COLLS.every(c => loaded.has(c))) { root.innerHTML = '<div class="loading">جاري تحميل البيانات…</div>'; return; }
   if (!db.users.length) { root.innerHTML = authView(true); authError = ''; return; }
   const u = me();
@@ -876,12 +876,12 @@ function makeFirestoreStore(fs, d) {
   const clean = b => JSON.parse(JSON.stringify(b));
   const snapOf = s => ({docs: s.docs.map(x => ({id: x.id, data: () => x.data()})), metadata: {fromCache: s.metadata.fromCache}});
   const dref = (c, id) => ({ set: b => fs.setDoc(fs.doc(d, c, id), clean(b)), delete: () => fs.deleteDoc(fs.doc(d, c, id)),
-    onSnapshot: (cb, err) => fs.onSnapshot(fs.doc(d, c, id), s => cb({exists: s.exists(), data: () => s.data()}), err) });
-  return { collection: c => ({ doc: id => dref(c, id), onSnapshot: (cb, err) => fs.onSnapshot(fs.collection(d, c), s => cb(snapOf(s)), err) }),
+    onSnapshot: (cb, err) => fs.onSnapshot(fs.doc(d, c, id), {includeMetadataChanges: true}, s => cb({exists: s.exists(), data: () => s.data()}), err) });
+  return { collection: c => ({ doc: id => dref(c, id), onSnapshot: (cb, err) => fs.onSnapshot(fs.collection(d, c), {includeMetadataChanges: true}, s => cb(snapOf(s)), err) }),
            doc: p => { const [c, id] = p.split('/'); return dref(c, id); } };
 }
 function startSync() {
-  const fail = e => { bootError = (e && e.code === 'permission-denied') ? 'قاعدة البيانات رفضت الوصول. راجعي قواعد الأمان في Firebase.' : 'تعذر الاتصال بقاعدة البيانات'; render(); };
+  const fail = e => { bootError = (e && e.code === 'permission-denied') ? 'قاعدة البيانات رفضت الوصول. راجعي قواعد الأمان (Rules) في Firebase.' : 'تعذر الاتصال بقاعدة البيانات' + (e && e.code ? ' (' + e.code + ')' : ''); render(); };
   COLLS.forEach(n => store.collection(n).onSnapshot(snap => {
     db[n] = snap.docs.map(d => ({...d.data(), id: d.id}));
     if (!snap.metadata.fromCache) loaded.add(n);
