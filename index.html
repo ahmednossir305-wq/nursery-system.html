@@ -346,6 +346,39 @@ async function saveFile(filename, data) {
   render();
 }
 
+/* ---- تصدير PDF: تُفتح نافذة الطباعة ويختار المستخدم "حفظ كـ PDF" ---- */
+function printDoc(html) {
+  const f = document.createElement('iframe');
+  f.style.cssText = 'position:fixed;inset:auto 0 0 auto;width:0;height:0;border:0;visibility:hidden';
+  document.body.appendChild(f);
+  const d = f.contentWindow.document; d.open(); d.write(html); d.close();
+  setTimeout(() => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { flash('تعذر فتح نافذة الطباعة.', 'error'); render(); } setTimeout(() => f.remove(), 60000); }, 400);
+  flash('اختاري "حفظ كملف PDF" من نافذة الطباعة.');
+}
+function reportDoc(title, sub, heads, rows, foot) {
+  const td = (v, i) => `<td${/^[\d.,\-—\s]+$/.test(String(v)) && String(v).trim() ? ' class="n"' : ''}>${esc(v)}</td>`;
+  return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>
+@page{size:A4;margin:14mm}body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;color:#111;margin:0;font-size:12px}
+h1{font-size:20px;margin:0 0 2px}.s{color:#555;margin-bottom:14px}.org{font-weight:700;color:#333;margin-bottom:8px}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #bbb;padding:6px 8px;text-align:right}th{background:#eee}
+td.n{text-align:left;direction:ltr;white-space:nowrap}tfoot td,.b td{font-weight:700;background:#f6f6f6}tr{page-break-inside:avoid}
+.f{margin-top:12px;color:#777;font-size:11px}</style></head><body>
+<div class="org">${esc(db.name)}</div><h1>${esc(title)}</h1><div class="s">${esc(sub)}</div>
+<table><thead><tr>${heads.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>
+${rows.map(r => `<tr${r.b ? ' class="b"' : ''}>${(r.b ? r.c : r).map(td).join('')}</tr>`).join('') || `<tr><td colspan="${heads.length}">لا توجد بيانات.</td></tr>`}
+</tbody>${foot ? `<tfoot><tr>${foot.map(td).join('')}</tr></tfoot>` : ''}</table>
+<div class="f">تاريخ الإصدار: ${fd(todayStr())}</div></body></html>`;
+}
+function filteredReceipts() {
+  const st = ui.rec, q = st.q.trim().toLowerCase();
+  return [...db.receipts].sort((a, b) => a.date < b.date ? 1 : a.date > b.date ? -1 : (b.t || 0) - (a.t || 0))
+    .filter(r => { const s = stu(r.studentId); return (!q || (s && s.name.toLowerCase().includes(q)) || String(r.no).toLowerCase().includes(q)) && (!st.m || (isSub(r) && r.month === st.m)) && (!st.p || r.method === st.p) && (!st.k || kindOf(r) === st.k); });
+}
+function filteredStudents() {
+  const st = ui.stu, q = st.q.trim().toLowerCase();
+  return [...db.students].sort((a, b) => (b.t || 0) - (a.t || 0)).filter(s => (!q || [s.name, s.code, s.phone, s.parent].some(v => String(v || '').toLowerCase().includes(q))) && (st.c === '0' || s.classId === st.c));
+}
+
 /* ============ العرض ============ */
 function pager(key, total) {
   const pages = Math.max(1, Math.ceil(total / PER));
@@ -434,7 +467,7 @@ function pgStudents() {
   const edit = can('students_edit');
   const classOpts = [['', 'بدون فصل'], ...db.classes.map(c => [c.id, c.name])];
   return `<header class="page-head"><div><h1>الطلاب والفصول</h1><p>${db.students.length} طالبًا مسجلًا · ${db.students.filter(s => s.status === 'نشط').length} نشطًا · ${db.classes.length} فصول</p></div>
-    ${edit ? `<div class="actions"><button type="button" class="btn" data-act="goform">${icon('plus', 18)} إضافة طالب</button></div>` : ''}</header>
+    <div class="actions"><button type="button" class="btn btn-outline" data-act="stu-pdf">${icon('download', 18)} تصدير الطلاب PDF</button>${edit ? `<button type="button" class="btn" data-act="goform">${icon('plus', 18)} إضافة طالب</button>` : ''}</div></header>
   <section class="two-col"><div class="wide"><div class="card">
     <form class="filters" data-form="stu-filter"><div class="field" style="flex:2 1 220px"><label for="q">بحث</label><input id="q" name="q" type="search" value="${esc(st.q)}" placeholder="الاسم أو الكود أو الهاتف أو ولي الأمر"></div>
       <div class="field"><label for="c">الفصل</label><select id="c" name="c" data-change="stu-filter"><option value="0">كل الفصول</option>${opt(db.classes.map(c => [c.id, c.name]), st.c)}</select></div>
@@ -474,7 +507,7 @@ function pgReceipts() {
   const todayT = db.receipts.filter(r => r.date === t).reduce((a, r) => a + num(r.amount), 0);
   const monthT = db.receipts.filter(r => monthStr(r.date) === ym).reduce((a, r) => a + num(r.amount), 0);
   const act = db.students.filter(s => s.status === 'نشط').sort((a, b) => a.name.localeCompare(b.name, 'ar'));
-  return `<header class="page-head"><div><h1>التحصيلات</h1><p>اشتراكات شهرية وكتب دراسية · ${cm} ${new Date().getFullYear()}</p></div></header>
+  return `<header class="page-head"><div><h1>التحصيلات</h1><p>اشتراكات شهرية وكتب دراسية · ${cm} ${new Date().getFullYear()}</p></div><div class="actions"><button type="button" class="btn btn-outline" data-act="rec-list-pdf">${icon('download', 18)} تصدير السجل PDF</button></div></header>
   <section class="two-col"><div class="wide">
     <div class="grid"><div class="stat"><div class="label">تحصيلات اليوم</div><div class="value">${fmt(todayT)} <small>${CUR}</small></div></div><div class="stat"><div class="label">تحصيلات ${cm}</div><div class="value">${fmt(monthT)} <small>${CUR}</small></div></div></div>
     <div class="card"><h2>سجل الإيصالات</h2>
@@ -507,7 +540,7 @@ function pgReceiptView(id) {
   const r = db.receipts.find(x => x.id === id);
   if (!r) return `<div class="card"><h2>الإيصال غير موجود</h2><a class="btn btn-outline" href="#receipts">رجوع للتحصيلات</a></div>`;
   const {s, c, w} = receiptInfo(r);
-  return `<div class="actions">${dl ? `<button type="button" class="btn" data-act="rec-save" data-id="${esc(r.id)}">${icon('download', 18)} تحميل الإيصال للطباعة</button>` : ''}<a class="btn btn-outline" href="#receipts">رجوع للتحصيلات</a></div>
+  return `<div class="actions"><button type="button" class="btn" data-act="rec-save" data-id="${esc(r.id)}">${icon('download', 18)} تصدير الإيصال PDF</button><a class="btn btn-outline" href="#receipts">رجوع للتحصيلات</a></div>
   <div class="receipt"><div class="receipt-head"><div><div style="font-size:20px;font-weight:700">${esc(db.name)}</div><div class="muted" style="margin-top:2px">إيصال استلام نقدية</div></div>
     <div style="font-size:14px"><div>رقم: <strong class="code"><span class="ltr">${esc(r.no)}</span></strong></div><div class="muted" style="margin-top:2px">التاريخ: ${fd(r.date)}</div></div></div>
     <div style="display:flex;flex-direction:column;gap:12px;font-size:15.5px">
@@ -567,7 +600,7 @@ function journalRange() {
 }
 function pgJournal() {
   const {from, to, opening, rows, tin, tout} = journalRange();
-  return `<header class="page-head"><div><h1>اليومية والصندوق</h1><p>تُحدَّث تلقائيًا من التحصيلات والمصروفات</p></div>${dl ? `<div class="actions"><button type="button" class="btn btn-outline" data-act="jr-save">${icon('download', 18)} تحميل اليومية (Excel)</button></div>` : ''}</header>
+  return `<header class="page-head"><div><h1>اليومية والصندوق</h1><p>تُحدَّث تلقائيًا من التحصيلات والمصروفات</p></div><div class="actions"><button type="button" class="btn btn-outline" data-act="jr-save">${icon('download', 18)} تصدير اليومية PDF</button></div></header>
   <section class="grid"><div class="stat"><div class="label">رصيد أول الفترة</div><div class="value">${fmt(opening)} <small>${CUR}</small></div><div class="note">قبل ${fd(from)}</div></div>
     <div class="stat"><div class="label">إجمالي الوارد</div><div class="value pos">${fmt(tin)} <small>${CUR}</small></div><div class="note">تحصيلات الطلاب</div></div>
     <div class="stat"><div class="label">إجمالي المنصرف</div><div class="value neg">${fmt(tout)} <small>${CUR}</small></div><div class="note">كل المصروفات</div></div>
@@ -592,7 +625,7 @@ function incomeData() {
 function pgIncome() {
   const d = incomeData(), pct = (v, t) => t > 0 ? Math.round(v / t * 100) + '%' : '—';
   const row = (x, t, cls) => `<tr><td>${esc(x.name)}</td><td class="num ${cls}"><strong>${fmt(x.v)}</strong></td><td class="num muted">${pct(x.v, t)}</td></tr>`;
-  return `<header class="page-head"><div><h1>قائمة الدخل</h1><p>الإيرادات والمصروفات وصافي النتيجة عن فترة</p></div>${dl ? `<div class="actions"><button type="button" class="btn btn-outline" data-act="inc-save">${icon('download', 18)} تحميل القائمة (Excel)</button></div>` : ''}</header>
+  return `<header class="page-head"><div><h1>قائمة الدخل</h1><p>الإيرادات والمصروفات وصافي النتيجة عن فترة</p></div><div class="actions"><button type="button" class="btn btn-outline" data-act="inc-save">${icon('download', 18)} تصدير القائمة PDF</button></div></header>
   <section class="card"><form class="filters" data-form="inc"><div class="field"><label for="i_from">من</label><input id="i_from" name="from" type="date" value="${d.from}"></div><div class="field"><label for="i_to">إلى</label><input id="i_to" name="to" type="date" value="${d.to}"></div><button class="btn" type="submit">عرض</button></form></section>
   <section class="grid"><div class="stat"><div class="label">إجمالي الإيرادات</div><div class="value pos">${fmt(d.tin)} <small>${CUR}</small></div></div>
     <div class="stat"><div class="label">إجمالي المصروفات</div><div class="value neg">${fmt(d.tout)} <small>${CUR}</small></div></div>
@@ -839,7 +872,7 @@ const acts = {
     if (!await askConfirm('حذف الإيصال سيحذف حركته من اليومية والصندوق. متأكد؟', 'حذف')) return;
     await remove('receipts', r.id); flash(`تم حذف الإيصال ${r.no} وحركته من اليومية والصندوق.`); render();
   },
-  'rec-save'(d) { const r = db.receipts.find(x => x.id === d.id); if (r) saveFile(`${r.no}.html`, receiptFile(r)); },
+  'rec-save'(d) { const r = db.receipts.find(x => x.id === d.id); if (r) printDoc(receiptFile(r).replace(/<button onclick[^>]*>[^<]*<\/button>/, '')); },
   async 'exp-del'(d) {
     if (!can('expenses') || !await askConfirm('حذف المصروف سيحذف حركته من اليومية والصندوق. متأكد؟', 'حذف')) return;
     await remove('expenses', d.id); flash('تم حذف المصروف وحركته من اليومية والصندوق.'); render();
@@ -854,18 +887,25 @@ const acts = {
     await remove('users', u.id); flash('تم حذف المستخدم.'); render();
   },
   'inc-save'() {
-    const d = incomeData(), q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"', L = [];
-    L.push([`قائمة الدخل من ${fd(d.from)} إلى ${fd(d.to)}`].map(q).join(','), ['البند','المبلغ'].map(q).join(','), ['الإيرادات',''].map(q).join(','));
-    d.inc.forEach(x => L.push([x.name, x.v].map(q).join(','))); L.push(['إجمالي الإيرادات', d.tin].map(q).join(','), ['المصروفات',''].map(q).join(','));
-    d.exp.forEach(x => L.push([x.name, x.v].map(q).join(','))); L.push(['إجمالي المصروفات', d.tout].map(q).join(','), [d.net >= 0 ? 'صافي الربح' : 'صافي العجز', d.net].map(q).join(','));
-    saveFile(`income-${d.from}-${d.to}.csv`, '﻿' + L.join('\r\n'));
+    const d = incomeData(), pc = (v, t) => t > 0 ? Math.round(v / t * 100) + '%' : '—';
+    const body = [{b: 1, c: ['الإيرادات (التحصيلات)', '', '']}, ...d.inc.map(x => [x.name, fmt(x.v), pc(x.v, d.tin)]), {b: 1, c: ['إجمالي الإيرادات', fmt(d.tin), '']},
+      {b: 1, c: ['المصروفات', '', '']}, ...d.exp.map(x => [x.name, fmt(x.v), pc(x.v, d.tout)]), {b: 1, c: ['إجمالي المصروفات', fmt(d.tout), '']}];
+    printDoc(reportDoc('قائمة الدخل', `عن الفترة من ${fd(d.from)} إلى ${fd(d.to)}`, ['البند', `المبلغ (${CUR})`, 'النسبة'], body, [d.net >= 0 ? 'صافي الربح' : 'صافي العجز', fmt(d.net), '']));
+  },
+  'rec-list-pdf'() {
+    const rows = filteredReceipts(), tot = r2(rows.reduce((a, r) => a + num(r.amount), 0));
+    printDoc(reportDoc('سجل التحصيلات', `${rows.length} إيصالًا`, ['رقم الإيصال','الطالب','النوع','المبلغ','طريقة الدفع','التاريخ'],
+      rows.map(r => { const s = stu(r.studentId); return [r.no, s ? s.name : '—', isSub(r) ? 'اشتراك · ' + r.month : kindOf(r), fmt(r.amount), r.method, fd(r.date)]; }), ['', '', 'الإجمالي', fmt(tot), '', '']));
+  },
+  'stu-pdf'() {
+    const rows = filteredStudents();
+    printDoc(reportDoc('بيانات الطلاب', `${rows.length} طالبًا`, ['الكود','الطالب','الفصل','ولي الأمر','الهاتف','الرسوم','الحالة'],
+      rows.map(s => { const c = s.classId ? cls(s.classId) : null; return [s.code, s.name, c ? c.name : '—', s.parent || '—', s.phone || '—', fmt(s.fee), s.status]; })));
   },
   'jr-save'() {
-    const {from, to, opening, rows} = journalRange();
-    const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
-    const lines = [['التاريخ','النوع','المرجع','البيان','وارد','منصرف','الرصيد'].map(q).join(','), [fd(from),'رصيد أول الفترة','','','','',opening].map(q).join(',')];
-    rows.forEach(e => lines.push([fd(e.date), e.type, e.ref, e.desc, e.in || '', e.out || '', e.bal].map(q).join(',')));
-    saveFile(`journal-${from}-${to}.csv`, '﻿' + lines.join('\r\n'));
+    const {from, to, opening, rows, tin, tout} = journalRange();
+    const body = [{b: 1, c: ['', 'رصيد أول الفترة', '', '', '', '', fmt(opening)]}, ...rows.map(e => [fd(e.date), e.type, e.ref, e.desc, e.in ? fmt(e.in) : '—', e.out ? fmt(e.out) : '—', fmt(e.bal)])];
+    printDoc(reportDoc('اليومية والصندوق', `من ${fd(from)} إلى ${fd(to)}`, ['التاريخ','النوع','المرجع','البيان','وارد','منصرف','الرصيد'], body, ['', '', '', 'إجمالي الفترة', fmt(tin), fmt(tout), fmt(r2(opening + tin - tout))]));
   },
   backup() {
     const o = {v: 2, name: db.name}; COLLS.forEach(c => { o[c] = db[c]; });
