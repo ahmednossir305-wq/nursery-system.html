@@ -6,7 +6,8 @@
 <title>نظام الحضانة</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
-<style>
+<style>[hidden]{display:none!important}
+
 /* Layout: dark teal sidebar + working area. Dashboard first, then one page per ledger. */
 :root{
   --bg:#F7F4EE;--card:#FFFFFF;--fg:#1B2B34;--muted:#5B6B73;--line:#E6E0D5;--line2:#EFEAE0;
@@ -188,6 +189,10 @@ window.FIREBASE_CONFIG = {
 const MONTHS = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const DAYS = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
 const METHODS = ['نقدي','تحويل بنكي','محفظة إلكترونية','شيك'];
+const KINDS = ['اشتراك شهري','كتب دراسية'];
+const kindOf = r => KINDS.includes(r.kind) ? r.kind : KINDS[0];
+const isSub = r => kindOf(r) === KINDS[0];
+const forWhat = r => isSub(r) ? 'اشتراك شهر ' + r.month : 'ثمن كتب دراسية';
 const ROLES = ['مدير','محاسب','موظف'];
 const PERMS = {
   dashboard:['مدير','محاسب','موظف'], students_view:['مدير','محاسب','موظف'], students_edit:['مدير','موظف'],
@@ -293,7 +298,7 @@ async function inChunks(tasks, n = 8) { for (let i = 0; i < tasks.length; i += n
 
 function journalEntries() {
   const L = [];
-  db.receipts.forEach(r => { const s = stu(r.studentId); L.push({t: r.t || 0, date: r.date, type: 'تحصيل', ref: r.no, desc: `رسوم ${r.month} — ${s ? s.name : 'طالب محذوف'}`, in: num(r.amount), out: 0}); });
+  db.receipts.forEach(r => { const s = stu(r.studentId); L.push({t: r.t || 0, date: r.date, type: 'تحصيل', ref: r.no, desc: `${forWhat(r)} — ${s ? s.name : 'طالب محذوف'}`, in: num(r.amount), out: 0}); });
   db.expenses.forEach(x => { const t = typ(x.typeId); L.push({t: x.t || 0, date: x.date, type: 'مصروف', ref: expRef(x), desc: (t ? t.name : 'غير محدد') + (x.desc ? ' — ' + x.desc : ''), in: 0, out: num(x.amount)}); });
   L.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.t - b.t);
   let bal = 0; L.forEach(e => { bal = r2(bal + e.in - e.out); e.bal = bal; });
@@ -316,7 +321,7 @@ const can = p => { const u = me(); return !!u && PERMS[p].includes(u.role); };
 function setUid(v) { uid = v; try { v ? sessionStorage.setItem('uid', v) : sessionStorage.removeItem('uid'); } catch (e) {} }
 
 /* ============ الحالة والرسائل ============ */
-const ui = { stu:{q:'',c:'0',page:1,edit:null,editClass:null}, rec:{q:'',m:'',p:'',page:1}, exp:{month:todayStr().slice(0,7),t:'0',page:1}, jr:{from:todayStr().slice(0,8)+'01',to:todayStr()}, usr:{edit:null} };
+const ui = { stu:{q:'',c:'0',page:1,edit:null,editClass:null}, rec:{q:'',m:'',p:'',k:'',kind:KINDS[0],page:1}, exp:{month:todayStr().slice(0,7),t:'0',page:1}, jr:{from:todayStr().slice(0,8)+'01',to:todayStr()}, usr:{edit:null} };
 let flashes = [], authError = '';
 const flash = (m, t = 'success') => { flashes.push({m, t, exp: Date.now() + 6000}); flashes = flashes.slice(-2); setTimeout(() => render(true), 6100); };
 const root = document.getElementById('root'), modal = document.getElementById('modal');
@@ -394,7 +399,7 @@ function pgDashboard() {
   const mx = Math.max(1, ...months.flatMap(m => [m.in, m.out]));
   const byClass = [...db.classes.map(c => ({name: c.name, n: act.filter(s => s.classId === c.id).length})), {name: 'بدون فصل', n: act.filter(s => !cls(s.classId)).length}].filter(c => c.n > 0);
   const recent = [...db.receipts].sort((a, b) => a.date < b.date ? 1 : a.date > b.date ? -1 : (b.t || 0) - (a.t || 0)).slice(0, 5);
-  const late = act.filter(s => num(s.fee) > 0 && !db.receipts.some(r => r.studentId === s.id && r.month === mName && r.date.slice(0, 4) === String(now.getFullYear())));
+  const late = act.filter(s => num(s.fee) > 0 && !db.receipts.some(r => isSub(r) && r.studentId === s.id && r.month === mName && r.date.slice(0, 4) === String(now.getFullYear())));
   return `<header class="page-head"><div><h1>لوحة التحكم</h1><p>${DAYS[now.getDay()]} ${now.getDate()} ${mName} ${now.getFullYear()} · ملخص الشهر</p></div>
     <div class="actions">${can('expenses') ? '<a class="btn btn-outline" href="#expenses">تسجيل مصروف</a>' : ''}<a class="btn" href="#receipts">${icon('plus', 18)} إيصال جديد</a></div></header>
   <section class="grid">
@@ -408,8 +413,8 @@ function pgDashboard() {
       <div><div class="chart">${months.map(m => `<div class="col"><div class="b"><span>${fmt(m.in)}</span><i style="height:${Math.round(m.in / mx * 190)}px;background:var(--accent)"></i></div><div class="b"><span>${fmt(m.out)}</span><i style="height:${Math.round(m.out / mx * 190)}px;background:var(--amber)"></i></div></div>`).join('')}</div>
       <div class="chart-labels">${months.map(m => `<div>${m.label}</div>`).join('')}</div></div></div>
     <div class="card"><div class="split"><h2>آخر التحصيلات</h2><a class="code" href="#receipts">عرض الكل</a></div>
-      <div class="table-wrap"><table><thead><tr><th>رقم الإيصال</th><th>الطالب</th><th>الشهر</th><th>المبلغ</th><th>طريقة الدفع</th><th>التاريخ</th></tr></thead><tbody>
-      ${recent.map(r => { const s = stu(r.studentId); return `<tr><td class="code"><span class="ltr">${esc(r.no)}</span></td><td>${esc(s ? s.name : '—')}</td><td>${esc(r.month)}</td><td class="num"><strong>${fmt(r.amount)}</strong></td><td>${esc(r.method)}</td><td class="muted">${fd(r.date)}</td></tr>`; }).join('') || '<tr><td colspan="6" class="empty">لا توجد تحصيلات بعد. أضف طالبًا من صفحة الطلاب ثم أصدر أول إيصال.</td></tr>'}
+      <div class="table-wrap"><table><thead><tr><th>رقم الإيصال</th><th>الطالب</th><th>النوع</th><th>المبلغ</th><th>طريقة الدفع</th><th>التاريخ</th></tr></thead><tbody>
+      ${recent.map(r => { const s = stu(r.studentId); return `<tr><td class="code"><span class="ltr">${esc(r.no)}</span></td><td>${esc(s ? s.name : '—')}</td><td>${esc(isSub(r) ? r.month : 'كتب دراسية')}</td><td class="num"><strong>${fmt(r.amount)}</strong></td><td>${esc(r.method)}</td><td class="muted">${fd(r.date)}</td></tr>`; }).join('') || '<tr><td colspan="6" class="empty">لا توجد تحصيلات بعد. أضف طالبًا من صفحة الطلاب ثم أصدر أول إيصال.</td></tr>'}
       </tbody></table></div></div></div>
   <div class="side">
     <div class="card"><div><h2>الطلاب حسب الفصل</h2><p class="sub">${act.length} طالبًا نشطًا</p></div><div class="bar-list">
@@ -462,31 +467,33 @@ function pgStudents() {
 function pgReceipts() {
   const st = ui.rec, q = st.q.trim().toLowerCase();
   let rows = [...db.receipts].sort((a, b) => a.date < b.date ? 1 : a.date > b.date ? -1 : (b.t || 0) - (a.t || 0))
-    .filter(r => { const s = stu(r.studentId); return (!q || (s && s.name.toLowerCase().includes(q)) || String(r.no).toLowerCase().includes(q)) && (!st.m || r.month === st.m) && (!st.p || r.method === st.p); });
+    .filter(r => { const s = stu(r.studentId); return (!q || (s && s.name.toLowerCase().includes(q)) || String(r.no).toLowerCase().includes(q)) && (!st.m || (isSub(r) && r.month === st.m)) && (!st.p || r.method === st.p) && (!st.k || kindOf(r) === st.k); });
   const total = rows.length; rows = paged('rec', rows);
   const t = todayStr(), ym = t.slice(0, 7), cm = MONTHS[new Date().getMonth()];
   const todayT = db.receipts.filter(r => r.date === t).reduce((a, r) => a + num(r.amount), 0);
   const monthT = db.receipts.filter(r => monthStr(r.date) === ym).reduce((a, r) => a + num(r.amount), 0);
   const act = db.students.filter(s => s.status === 'نشط').sort((a, b) => a.name.localeCompare(b.name, 'ar'));
-  return `<header class="page-head"><div><h1>التحصيلات</h1><p>رسوم الطلاب الشهرية · ${cm} ${new Date().getFullYear()}</p></div></header>
+  return `<header class="page-head"><div><h1>التحصيلات</h1><p>اشتراكات شهرية وكتب دراسية · ${cm} ${new Date().getFullYear()}</p></div></header>
   <section class="two-col"><div class="wide">
     <div class="grid"><div class="stat"><div class="label">تحصيلات اليوم</div><div class="value">${fmt(todayT)} <small>${CUR}</small></div></div><div class="stat"><div class="label">تحصيلات ${cm}</div><div class="value">${fmt(monthT)} <small>${CUR}</small></div></div></div>
     <div class="card"><h2>سجل الإيصالات</h2>
       <form class="filters" data-form="rec-filter"><div class="field" style="flex:2 1 200px"><label for="q">بحث</label><input id="q" name="q" type="search" value="${esc(st.q)}" placeholder="اسم الطالب أو رقم الإيصال"></div>
+      <div class="field"><label for="k">نوع التحصيل</label><select id="k" name="k" data-change="rec-filter"><option value="">الكل</option>${opt(KINDS.map(m => [m, m]), st.k)}</select></div>
       <div class="field"><label for="m">الشهر</label><select id="m" name="m" data-change="rec-filter"><option value="">كل الشهور</option>${opt(MONTHS.map(m => [m, m]), st.m)}</select></div>
       <div class="field"><label for="p">طريقة الدفع</label><select id="p" name="p" data-change="rec-filter"><option value="">الكل</option>${opt(METHODS.map(m => [m, m]), st.p)}</select></div>
       <button class="btn" type="submit">${icon('search', 18)} تصفية</button></form>
       <div class="table-wrap"><table><thead><tr><th>رقم الإيصال</th><th>الطالب</th><th>الشهر</th><th>المبلغ</th><th>طريقة الدفع</th><th>التاريخ</th><th></th></tr></thead><tbody>
-      ${rows.map(r => { const s = stu(r.studentId); return `<tr><td class="code"><span class="ltr">${esc(r.no)}</span></td><td>${esc(s ? s.name : '—')}</td><td>${esc(r.month)}</td><td class="num"><strong>${fmt(r.amount)}</strong></td><td>${esc(r.method)}</td><td class="muted">${fd(r.date)}</td>
+      ${rows.map(r => { const s = stu(r.studentId); return `<tr><td class="code"><span class="ltr">${esc(r.no)}</span></td><td>${esc(s ? s.name : '—')}</td><td>${esc(isSub(r) ? 'اشتراك · ' + r.month : 'كتب دراسية')}</td><td class="num"><strong>${fmt(r.amount)}</strong></td><td>${esc(r.method)}</td><td class="muted">${fd(r.date)}</td>
         <td style="white-space:nowrap"><a class="btn btn-icon" href="#receipt-${esc(r.id)}" aria-label="عرض الإيصال ${esc(r.no)}">${icon('receipts', 18)}</a>${can('receipts_delete') ? `<button type="button" class="btn btn-icon danger" data-act="rec-del" data-id="${esc(r.id)}" aria-label="حذف الإيصال ${esc(r.no)}">${icon('trash', 18)}</button>` : ''}</td></tr>`; }).join('') || '<tr><td colspan="7" class="empty">لا توجد إيصالات مطابقة.</td></tr>'}
       </tbody></table></div>
       <div class="split"><span class="muted">عرض ${rows.length} من ${total} إيصالًا</span>${pager('rec', total)}</div></div></div>
   <div class="side"><form class="card form" data-form="receipt"><h2>إصدار إيصال جديد</h2>
     <div class="field"><label for="r-no">رقم الإيصال</label><input id="r-no" class="ltr-input" type="text" readonly value="${esc(nextReceiptNo(t))}"></div>
     <div class="field"><label for="student_id">الطالب</label><select id="student_id" name="studentId" required data-change="rec-student"><option value="">${act.length ? 'اختر الطالب' : 'أضف طالبًا أولًا من صفحة الطلاب'}</option>${act.map(s => `<option value="${esc(s.id)}" data-fee="${esc(s.fee)}">${esc(s.name)} — ${esc(s.code)}</option>`).join('')}</select></div>
+    <div class="field"><label for="kind">نوع التحصيل</label><select id="kind" name="kind" data-change="rec-kind">${opt(KINDS.map(m => [m, m]), st.kind)}</select></div>
     <div class="row"><div class="field"><label for="payment_date">تاريخ السداد</label><input id="payment_date" name="date" type="date" value="${t}" required></div>
-    <div class="field"><label for="month_name">عن شهر</label><select id="month_name" name="month">${opt(MONTHS.map(m => [m, m]), cm)}</select></div></div>
-    <div class="field"><label for="amount">المبلغ (${CUR})</label><input id="amount" name="amount" type="number" step="0.01" min="0.01" required placeholder="يُملأ من رسوم الطالب"></div>
+    <div class="field" id="month-field"${st.kind === KINDS[0] ? '' : ' hidden'}><label for="month_name">عن شهر</label><select id="month_name" name="month">${opt(MONTHS.map(m => [m, m]), cm)}</select></div></div>
+    <div class="field"><label for="amount">المبلغ (${CUR})</label><input id="amount" name="amount" type="number" step="0.01" min="0.01" required placeholder="الاشتراك يُملأ من رسوم الطالب"></div>
     <div class="field"><label for="payment_method">طريقة الدفع</label><select id="payment_method" name="method">${opt(METHODS.map(m => [m, m]), METHODS[0])}</select></div>
     <div class="field"><label for="notes">ملاحظات</label><textarea id="notes" name="notes" rows="3"></textarea></div>
     <div class="form-actions" style="flex-direction:column"><button class="btn" type="submit" name="then" value="open">حفظ وعرض الإيصال</button><button class="btn btn-outline" type="submit" name="then" value="">حفظ فقط</button></div></form></div></section>`;
@@ -505,7 +512,7 @@ function pgReceiptView(id) {
     <div style="display:flex;flex-direction:column;gap:12px;font-size:15.5px">
     <div class="receipt-line"><span class="k">استلمنا من</span><strong>${s.parent ? 'السيد/ة ' + esc(s.parent) + ' — ولي أمر الطالب ' : 'ولي أمر الطالب '}${esc(s.name)}</strong></div>
     <div class="receipt-line"><span class="k">مبلغًا وقدره</span><strong>${fmt(r.amount)} ${CUR}</strong>${w ? `<span class="muted">(${esc(w)})</span>` : ''}</div>
-    <div class="receipt-line"><span class="k">وذلك عن</span><strong>رسوم شهر ${esc(r.month)}${c ? ' · فصل ' + esc(c.name) : ''}</strong></div>
+    <div class="receipt-line"><span class="k">وذلك عن</span><strong>${isSub(r) ? 'اشتراك شهر ' + esc(r.month) : 'ثمن كتب دراسية'}${c ? ' · فصل ' + esc(c.name) : ''}</strong></div>
     <div class="receipt-line"><span class="k">طريقة الدفع</span><strong>${esc(r.method)}</strong></div>
     ${r.notes ? `<div class="receipt-line"><span class="k">ملاحظات</span><span>${esc(r.notes)}</span></div>` : ''}</div>
     <div class="receipt-sign"><div>المحاسب</div><div>ولي الأمر</div></div></div>`;
@@ -514,7 +521,7 @@ function receiptFile(r) {
   const {s, c, w} = receiptInfo(r);
   const L = (k, v) => `<div style="display:flex;flex-wrap:wrap;gap:8px;border-bottom:1px solid #ddd;padding:8px 0"><span style="min-width:120px;color:#555">${k}</span><strong>${v}</strong></div>`;
   return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>إيصال ${esc(r.no)}</title><style>body{font-family:'Segoe UI',Tahoma,sans-serif;margin:0;padding:24px;color:#111}.r{max-width:720px;margin:0 auto;border:1px solid #444;border-radius:12px;padding:32px}.h{display:flex;justify-content:space-between;gap:12px;margin-bottom:20px}.s{display:flex;justify-content:space-between;gap:24px;margin-top:40px;color:#555}.s div{flex:1;border-top:1px solid #999;padding-top:8px;text-align:center}button{margin:0 auto 16px;display:block;padding:10px 24px;font-size:16px}@media print{button{display:none}}</style></head><body><button onclick="window.print()">طباعة</button><div class="r"><div class="h"><div><div style="font-size:20px;font-weight:700">${esc(db.name)}</div><div style="color:#555">إيصال استلام نقدية</div></div><div>رقم: <strong>${esc(r.no)}</strong><br>التاريخ: ${fd(r.date)}</div></div>
-${L('استلمنا من', (s.parent ? 'السيد/ة ' + esc(s.parent) + ' — ' : '') + 'ولي أمر الطالب ' + esc(s.name))}${L('مبلغًا وقدره', fmt(r.amount) + ' ' + CUR + (w ? ' (' + esc(w) + ')' : ''))}${L('وذلك عن', 'رسوم شهر ' + esc(r.month) + (c ? ' · فصل ' + esc(c.name) : ''))}${L('طريقة الدفع', esc(r.method))}${r.notes ? L('ملاحظات', esc(r.notes)) : ''}
+${L('استلمنا من', (s.parent ? 'السيد/ة ' + esc(s.parent) + ' — ' : '') + 'ولي أمر الطالب ' + esc(s.name))}${L('مبلغًا وقدره', fmt(r.amount) + ' ' + CUR + (w ? ' (' + esc(w) + ')' : ''))}${L('وذلك عن', (isSub(r) ? 'اشتراك شهر ' + esc(r.month) : 'ثمن كتب دراسية') + (c ? ' · فصل ' + esc(c.name) : ''))}${L('طريقة الدفع', esc(r.method))}${r.notes ? L('ملاحظات', esc(r.notes)) : ''}
 <div class="s"><div>المحاسب</div><div>ولي الأمر</div></div></div></body></html>`;
 }
 
@@ -696,14 +703,14 @@ const forms = {
     if (ui.stu.editClass && cls(ui.stu.editClass)) { upsert('classes', {...cls(ui.stu.editClass), name}); flash('تم تعديل الفصل.'); } else { upsert('classes', {id: newId(), name}); flash('تمت إضافة الفصل.'); }
     ui.stu.editClass = null; render();
   },
-  'rec-filter'(f) { ui.rec.q = f.get('q') || ''; ui.rec.m = f.get('m') || ''; ui.rec.p = f.get('p') || ''; ui.rec.page = 1; render(); },
+  'rec-filter'(f) { ui.rec.q = f.get('q') || ''; ui.rec.m = f.get('m') || ''; ui.rec.p = f.get('p') || ''; ui.rec.k = f.get('k') || ''; ui.rec.page = 1; render(); },
   receipt(f, el, ev) {
-    const s = stu(f.get('studentId')), date = f.get('date'), month = f.get('month'), amount = r2(f.get('amount'));
+    const s = stu(f.get('studentId')), date = f.get('date'), month = f.get('month'), amount = r2(f.get('amount')), kind = KINDS.includes(f.get('kind')) ? f.get('kind') : KINDS[0];
     if (!s) { flash('اختر الطالب.', 'error'); return render(); }
     if (!isDate(date)) { flash('تاريخ السداد غير صحيح.', 'error'); return render(); }
     if (!(amount > 0)) { flash('المبلغ يجب أن يكون أكبر من صفر.', 'error'); return render(); }
     const id = newId(), no = nextReceiptNo(date);
-    upsert('receipts', {id, no, studentId: s.id, date, month: MONTHS.includes(month) ? month : MONTHS[0], amount, method: METHODS.includes(f.get('method')) ? f.get('method') : METHODS[0], notes: f.get('notes').trim(), t: stamp()});
+    upsert('receipts', {id, no, studentId: s.id, kind, date, month: MONTHS.includes(month) ? month : MONTHS[0], amount, method: METHODS.includes(f.get('method')) ? f.get('method') : METHODS[0], notes: f.get('notes').trim(), t: stamp()});
     flash(`تم إصدار الإيصال ${no}.`);
     if (ev && ev.submitter && ev.submitter.value === 'open') { location.hash = '#receipt-' + id; render(); } else render();
   },
@@ -836,8 +843,8 @@ root.addEventListener('change', e => {
   const el = t.closest('[data-change]'); if (!el) return;
   const k = el.dataset.change, v = id => (document.getElementById(id) || {}).value || '';
   if (k === 'stu-filter') { ui.stu.c = el.value; ui.stu.q = v('q'); ui.stu.page = 1; render(); }
-  else if (k === 'rec-filter') { ui.rec.m = v('m'); ui.rec.p = v('p'); ui.rec.q = v('q'); ui.rec.page = 1; render(); }
-  else if (k === 'rec-student') { const o = el.options[el.selectedIndex], amt = document.getElementById('amount'); if (amt && o && o.dataset.fee && amt.dataset.touched !== '1') amt.value = o.dataset.fee; }
+  else if (k === 'rec-filter') { ui.rec.m = v('m'); ui.rec.p = v('p'); ui.rec.k = v('k'); ui.rec.q = v('q'); ui.rec.page = 1; render(); }
+  else if (k === 'rec-student' || k === 'rec-kind') { const kd = document.getElementById('kind'); if (kd) ui.rec.kind = kd.value; const sub = !kd || kd.value === KINDS[0], mf = document.getElementById('month-field'); if (mf) mf.hidden = !sub; const sel = document.getElementById('student_id'), o = sel && sel.options[sel.selectedIndex], amt = document.getElementById('amount'); if (amt && amt.dataset.touched !== '1') { if (!sub) amt.value = ''; else if (o && o.dataset.fee) amt.value = o.dataset.fee; } }
   else if (k === 'exp-month') { if (/^\d{4}-\d{2}$/.test(el.value)) { ui.exp.month = el.value; ui.exp.page = 1; render(); } }
   else if (k === 'exp-type') { ui.exp.t = el.value; ui.exp.page = 1; render(); }
 });
